@@ -136,6 +136,12 @@ If you encounter issues:
 3. **Data not saving**: Check if localStorage is enabled in your browser
 4. **TypeScript errors**: Make sure all dependencies are properly installed
 
+
+## Changelog
+
+- Project start and end dates are now displayed in dd/mm/yy format for consistency and improved readability.
+- Added Core Competencies section: displays a dot-list of skill categories in the portfolio view.
+
 ## Future Enhancements
 
 Potential features to add:
