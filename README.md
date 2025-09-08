@@ -14,6 +14,10 @@ A React TypeScript application for managing your projects and organizing your sk
 - **Local Storage**: All data is saved locally in your browser
 - **Responsive Design**: Works on desktop and mobile devices
 - **Modern UI**: Clean and intuitive interface
+- **Core Competencies**: Define high-level categories with descriptions
+- **Additional Details**: Add any extra categorized details similar to core competencies
+- **Resume Link**: Store a resume URL and expose a "View Resume" link in the portfolio
+- **Quick Navigation**: Fixed "View Portfolio" button to smoothly scroll to the portfolio section
 
 ## Data Safety Features
 
@@ -31,6 +35,7 @@ A React TypeScript application for managing your projects and organizing your sk
 - **Storage failure detection**: Alerts you if data cannot be saved
 - **Graceful degradation**: Continues working even if localStorage is unavailable
 - **Error recovery**: Automatic retry mechanisms for failed saves
+ - **Safe JSON parsing**: Corrupted or invalid saved data/backups are safely ignored to prevent crashes
 
 ### 📊 Data Management
 - **Export functionality**: Download your portfolio data as JSON
@@ -71,15 +76,15 @@ Before running this application, you need to install Node.js and npm:
 
 ## How to Use
 
-### Projects Tab
-- **Add a Project**: Fill out the form with project name, description, skills (comma-separated), and date
-- **View Projects**: See all your projects displayed in cards
-- **Delete Projects**: Click the "Delete" button on any project card
-
-### Skills Tab
-- **Add a Skill**: Enter skill name, category (e.g., Frontend, Backend, Tools), and proficiency level
-- **View Skills**: Skills are automatically grouped by category
-- **Delete Skills**: Click the "Delete" button on any skill card
+### Editing Your Portfolio
+- **Basics**: Name, Bio, Professional Summary, Email, LinkedIn, Location, Image URL, Languages
+- **Resume URL**: Paste the link to your resume (PDF or website). It appears as a "View Resume" link in the Contact section.
+- **Education**: Add entries with institution, degree, start and end dates
+- **Core Competencies**: Add category + description rows
+- **Additional Details**: Add any extra category + description rows (e.g., Certifications, Volunteering)
+- **Skills**: Add skills with category and proficiency; they are grouped by category in the display
+- **Projects**: Add projects with description, technologies, and dates
+- **Quick Navigation**: Use the fixed "View Portfolio" button to jump to the portfolio display
 
 ### Data Persistence
 - All data is automatically saved to your browser's localStorage
@@ -95,7 +100,7 @@ portfolio-manager/
 │   ├── App.css          # Application styles
 │   ├── main.tsx         # Application entry point
 │   └── index.css        # Global styles
-├── public/              # Static assets
+├── public/              # Static assets (or /src/img for bundled images)
 ├── index.html           # HTML template
 ├── package.json         # Project dependencies and scripts
 ├── tsconfig.json        # TypeScript configuration
@@ -139,8 +144,12 @@ If you encounter issues:
 
 ## Changelog
 
-- Project start and end dates are now displayed in dd/mm/yy format for consistency and improved readability.
-- Added Core Competencies section: displays a dot-list of skill categories in the portfolio view.
+- Project start and end dates display in dd/mm/yy format.
+- Added Core Competencies section with category + description.
+- Added Additional Details section (category + description) with editor and display.
+- Implemented Resume URL field and "View Resume" link in Contact.
+- Added fixed "View Portfolio" button for smooth scrolling to portfolio.
+- Hardened storage with safe JSON parsing for primary and backup data.
 
 ## Future Enhancements
 
