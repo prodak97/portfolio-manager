@@ -10,6 +10,7 @@ function formatDate(dateStr?: string) {
 }
 
 import React, { useState, useEffect, useRef } from 'react';
+import { jsPDF } from 'jspdf';
 import './styles/main.css';
 
 // Types
@@ -107,17 +108,56 @@ function safeJsonParse<T>(raw: string | null, fallback: T): T {
   }
 }
 
-function saveToLocalStorage(data: PortfolioInfo) {
+function isLocalStorageAvailable() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    // Backup system
-    let backups: string[] = safeJsonParse<string[]>(localStorage.getItem(BACKUP_KEY), []);
-    backups.unshift(JSON.stringify(data));
-    backups = backups.slice(0, 3); // Keep last 3 backups
-    localStorage.setItem(BACKUP_KEY, JSON.stringify(backups));
+    const testKey = '__storage_test__';
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
     return true;
   } catch {
     return false;
+  }
+}
+
+function saveToLocalStorage(data: PortfolioInfo): { success: boolean; error?: string } {
+  try {
+    if (!isLocalStorageAvailable()) {
+      return { success: false, error: 'Local storage is not available (possibly blocked or in private mode).' };
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    // Backup system
+    try {
+      let backups: string[] = safeJsonParse<string[]>(localStorage.getItem(BACKUP_KEY), []);
+      backups.unshift(JSON.stringify(data));
+      backups = backups.slice(0, 3); // Keep last 3 backups
+      // Try to persist backups, trim if quota is exceeded
+      while (true) {
+        try {
+          localStorage.setItem(BACKUP_KEY, JSON.stringify(backups));
+          break;
+        } catch (e: any) {
+          const isQuota = e && (e.name === 'QuotaExceededError' || e.code === 22);
+          if (isQuota && backups.length > 1) {
+            backups.pop();
+            continue;
+          }
+          // If still failing with 0 or 1 backups, skip backups entirely
+          try {
+            localStorage.removeItem(BACKUP_KEY);
+          } catch {}
+          // eslint-disable-next-line no-console
+          console.warn('Backup skipped due to storage quota. Primary data saved.');
+          break;
+        }
+      }
+    } catch (backupErr) {
+      // eslint-disable-next-line no-console
+      console.warn('Backup step failed:', backupErr);
+    }
+    return { success: true };
+  } catch (err: any) {
+    const message = err && err.message ? err.message : 'Unknown storage error';
+    return { success: false, error: message };
   }
 }
 
@@ -159,13 +199,17 @@ export default function App() {
     saveTimeout.current = setTimeout(() => {
       try {
         if (validateData(edit)) {
-          if (saveToLocalStorage(edit)) {
+          const saveResult = saveToLocalStorage(edit);
+          if (saveResult.success) {
             setInfo(edit);
             setSaveMsg('✅ All changes saved');
             setError('');
           } else {
-            setError('Storage error: Could not save data.');
+            setError(`Storage error: ${saveResult.error || 'Could not save data.'}`);
             setSaveMsg('');
+            // Optional console hint for developers
+            // eslint-disable-next-line no-console
+            console.warn('Save failed:', saveResult.error);
           }
         } else {
           setError('Validation error: Please check your data.');
@@ -253,6 +297,171 @@ export default function App() {
     URL.revokeObjectURL(url);
   }
 
+  // Import data from JSON file
+  function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.onchange = async () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const raw = JSON.parse(text);
+        const normalized: PortfolioInfo = {
+          ...defaultInfo,
+          ...raw,
+          languages: Array.isArray(raw.languages) ? raw.languages : [],
+          education: Array.isArray(raw.education) ? raw.education : [],
+          skills: Array.isArray(raw.skills) ? raw.skills : [],
+          projects: Array.isArray(raw.projects) ? raw.projects : [],
+          coreCompetencies: Array.isArray(raw.coreCompetencies) ? raw.coreCompetencies : [],
+          additionalDetails: Array.isArray(raw.additionalDetails) ? raw.additionalDetails : [],
+          resumeUrl: typeof raw.resumeUrl === 'string' ? raw.resumeUrl : '',
+        };
+        if (!validateData(normalized)) {
+          setError('Import validation error: name and email are required.');
+          return;
+        }
+        setEdit(normalized);
+        setInfo(normalized);
+        const res = saveToLocalStorage(normalized);
+        if (!res.success) {
+          setError(`Storage error after import: ${res.error || 'Unknown error'}`);
+        } else {
+          setSaveMsg('✅ Imported and saved');
+          setError('');
+        }
+      } catch (e: any) {
+        setError(`Failed to import JSON: ${e?.message || 'Unknown error'}`);
+      }
+    };
+    input.click();
+  }
+
+  // Download CV as PDF with print-friendly styles
+  async function downloadCV() {
+    try {
+      // Build a self-contained CV node with inline styles (no Tailwind)
+      const cvNode = document.createElement('div');
+      cvNode.style.width = '800px';
+      cvNode.style.padding = '28px';
+      cvNode.style.background = '#ffffff';
+      cvNode.style.color = '#111827';
+      cvNode.style.fontFamily = "Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'";
+      cvNode.style.fontSize = '12pt';
+      cvNode.style.lineHeight = '1.4';
+      // Place inside viewport and nearly invisible to ensure browsers paint it
+      cvNode.style.position = 'fixed';
+      cvNode.style.left = '0';
+      cvNode.style.top = '0';
+      cvNode.style.opacity = '0.01';
+      cvNode.style.pointerEvents = 'none';
+      cvNode.style.zIndex = '9999';
+
+      const sectionTitle = (text: string) => `<h2 style="margin:16px 0 6px; padding-bottom:4px; border-bottom:1px solid #e5e7eb; font-size:14pt; color:#1f2937;">${text}</h2>`;
+
+      // Header (preload image to avoid taint/blank)
+      let profileImgHtml = '';
+      if (info.imageUrl) {
+        try {
+          const loadedOk = await new Promise<boolean>((resolve) => {
+            const testImg = new Image();
+            testImg.crossOrigin = 'anonymous';
+            testImg.onload = () => resolve(true);
+            testImg.onerror = () => resolve(false);
+            testImg.src = info.imageUrl;
+          });
+          if (loadedOk) {
+            profileImgHtml = `<img src="${info.imageUrl}" alt="Profile" crossOrigin="anonymous" style="width:64px; height:64px; border-radius:9999px; object-fit:cover; border:1px solid #e5e7eb;" />`;
+          }
+        } catch {}
+      }
+      const headerHtml = `
+        <div style="display:flex; gap:16px; align-items:center; margin-bottom:8px;">${profileImgHtml}
+          <div>
+            <div style="font-size:22pt; font-weight:700; margin-bottom:2px;">${info.name || ''}</div>
+            <div style="color:#374151;">${info.location || ''}</div>
+            <div style="color:#374151;">${info.email || ''}${info.linkedin ? ` • ${info.linkedin}` : ''}</div>
+          </div>
+        </div>
+        ${info.bio ? `<div style="margin:6px 0 10px; color:#374151;">${info.bio}</div>` : ''}
+      `;
+
+      // Summary
+      const summaryHtml = info.professionalSummary ? `${sectionTitle('Summary')}<div style="color:#374151;">${info.professionalSummary}</div>` : '';
+
+      // Skills (condensed)
+      const skillsByCat = info.skills.reduce((acc, s) => {
+        if (!acc[s.category]) acc[s.category] = [] as string[];
+        acc[s.category].push(`${s.name}${s.proficiency ? ` (${s.proficiency})` : ''}`);
+        return acc;
+      }, {} as Record<string, string[]>);
+      const skillsHtml = Object.keys(skillsByCat).length
+        ? `${sectionTitle('Skills')}
+          <div>
+            ${Object.entries(skillsByCat).map(([cat, arr]) => `<div style="margin:2px 0;"><span style="font-weight:600; color:#1f2937;">${cat}:</span> <span style="color:#374151;">${arr.join(', ')}</span></div>`).join('')}
+          </div>`
+        : '';
+
+      // Education
+      const educationHtml = (info.education && info.education.length)
+        ? `${sectionTitle('Education')}
+            <ul style="margin:6px 0 0 16px;">
+              ${info.education.map(e => `<li style="margin:2px 0; color:#374151;"><span style="font-weight:600; color:#111827;">${e.name}</span> — ${e.degree} (${formatDate(e.startDate)} - ${e.endDate ? formatDate(e.endDate) : 'Present'})</li>`).join('')}
+            </ul>`
+        : '';
+
+      // Projects (limit to 6 to keep concise)
+      const projectsHtml = (info.projects && info.projects.length)
+        ? `${sectionTitle('Projects')}
+            <ul style="margin:6px 0 0 16px;">
+              ${info.projects.slice(0, 6).map(p => `<li style="margin:4px 0; color:#374151;"><span style="font-weight:600; color:#111827;">${p.name}</span> (${formatDate(p.date)}${p.endDate ? ` - ${formatDate(p.endDate)}` : ' - Present'}) — ${p.description}${p.technologiesUsed?.length ? `<div style=\"font-size:10pt; color:#6b7280;\">Tech: ${p.technologiesUsed.join(', ')}</div>` : ''}</li>`).join('')}
+            </ul>`
+        : '';
+
+      // Additional Details
+      const addDetailsHtml = (info.additionalDetails && info.additionalDetails.length)
+        ? `${sectionTitle('Additional Details')}
+            <ul style="margin:6px 0 0 16px;">
+              ${info.additionalDetails.map(d => `<li style="margin:2px 0; color:#374151;"><span style="font-weight:600; color:#111827;">${d.category}</span>: ${d.description}</li>`).join('')}
+            </ul>`
+        : '';
+
+      cvNode.innerHTML = headerHtml + summaryHtml + skillsHtml + educationHtml + projectsHtml + addDetailsHtml;
+      document.body.appendChild(cvNode);
+      // Ensure layout is flushed before capture
+      await new Promise(requestAnimationFrame);
+      await (document as any).fonts?.ready?.catch?.(() => {});
+
+      // Use jsPDF's HTML renderer directly to avoid canvas/base64 issues
+      const pdf = new jsPDF('p', 'pt', 'a4');
+      await new Promise<void>((resolve) => {
+        (pdf as any).html(cvNode, {
+          x: 0,
+          y: 0,
+          html2canvas: {
+            scale: Math.min(2, window.devicePixelRatio || 1.5),
+            useCORS: true,
+            allowTaint: false,
+            backgroundColor: '#ffffff',
+            logging: false,
+            foreignObjectRendering: false,
+            windowWidth: 800,
+            scrollX: 0,
+            scrollY: 0,
+          },
+          callback: () => resolve(),
+        });
+      });
+      pdf.save(`${info.name || 'cv'}.pdf`);
+    } catch (e) {
+      setError('Failed to generate PDF.');
+      // eslint-disable-next-line no-console
+      console.error('PDF generation error', e);
+    }
+  }
+
   // Clear all data
   function clearAll() {
     if (window.confirm('Are you sure you want to clear all data?')) {
@@ -264,7 +473,7 @@ export default function App() {
 
   // Responsive UI and feedback
   return (
-    <div className="flex flex-col md:flex-row gap-10 p-4 md:p-8 max-w-5xl mx-auto bg-white rounded-xl shadow-lg mt-6" id="portfolio-root">
+    <div className="flex flex-col md:flex-row gap-10 p-4 md:p-8 max-w-5xl mx-auto bg-white rounded-xl shadow-lg mt-6">
       {/* Editing Section */}
       <div className="flex-1 border-b md:border-b-0 md:border-r border-gray-200 pb-6 md:pr-8">
         <h2 className="text-xl font-semibold mb-4">Edit Portfolio</h2>
@@ -274,60 +483,60 @@ export default function App() {
         </div>
         <label className="block mb-2 font-medium">
           Name:
-          <input name="name" value={edit.name} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <input id="name" name="name" autoComplete="name" value={edit.name} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <label className="block mb-2 font-medium">
           Bio:
-          <textarea name="bio" value={edit.bio} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <textarea id="bio" name="bio" autoComplete="off" value={edit.bio} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <label className="block mb-2 font-medium">
           Professional Summary:
-          <textarea name="professionalSummary" value={edit.professionalSummary} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <textarea id="professionalSummary" name="professionalSummary" autoComplete="off" value={edit.professionalSummary} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <label className="block mb-2 font-medium">
           Email:
-          <input name="email" value={edit.email} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <input id="email" name="email" autoComplete="email" value={edit.email} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <label className="block mb-2 font-medium">
           LinkedIn:
-          <input name="linkedin" value={edit.linkedin} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <input id="linkedin" name="linkedin" autoComplete="url" value={edit.linkedin} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <label className="block mb-2 font-medium">
           Resume URL:
-          <input name="resumeUrl" value={(edit as any).resumeUrl || ''} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <input id="resumeUrl" name="resumeUrl" autoComplete="url" value={(edit as any).resumeUrl || ''} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <label className="block mb-2 font-medium">
           Location:
-          <input name="location" value={edit.location} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <input id="location" name="location" autoComplete="address-level2" value={edit.location} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <label className="block mb-2 font-medium">
           Image URL:
-          <input name="imageUrl" value={edit.imageUrl} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <input id="imageUrl" name="imageUrl" autoComplete="url" value={edit.imageUrl} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <label className="block mb-2 font-medium">
           Languages (comma separated):
-          <input name="languages" value={Array.isArray(edit.languages) ? edit.languages.join(', ') : ''} onChange={e => setEdit({ ...edit, languages: e.target.value.split(',').map(l => l.trim()) })} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <input id="languages" name="languages" autoComplete="off" value={Array.isArray(edit.languages) ? edit.languages.join(', ') : ''} onChange={e => setEdit({ ...edit, languages: e.target.value.split(',').map(l => l.trim()) })} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <h3 className="text-lg font-semibold mb-2">Education</h3>
   {(Array.isArray(edit.education) ? edit.education : []).map((edu, idx) => (
           <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
-            <input placeholder="Institution Name" value={edu.name} onChange={e => {
+            <input id={`education-name-${idx}`} name={`education-name-${idx}`} autoComplete="organization" placeholder="Institution Name" value={edu.name} onChange={e => {
               const updated = { ...edu, name: e.target.value };
               const newList = edit.education.map((e_, i) => i === idx ? updated : e_);
               setEdit({ ...edit, education: newList });
             }} className="w-full mb-2 p-2 border rounded" />
-            <input placeholder="Degree" value={edu.degree} onChange={e => {
+            <input id={`education-degree-${idx}`} name={`education-degree-${idx}`} autoComplete="off" placeholder="Degree" value={edu.degree} onChange={e => {
               const updated = { ...edu, degree: e.target.value };
               const newList = edit.education.map((e_, i) => i === idx ? updated : e_);
               setEdit({ ...edit, education: newList });
             }} className="w-full mb-2 p-2 border rounded" />
             <div className="flex gap-2">
-              <input type="date" value={edu.startDate} onChange={e => {
+              <input id={`education-start-${idx}`} name={`education-start-${idx}`} autoComplete="off" type="date" value={edu.startDate} onChange={e => {
                 const updated = { ...edu, startDate: e.target.value };
                 const newList = edit.education.map((e_, i) => i === idx ? updated : e_);
                 setEdit({ ...edit, education: newList });
               }} className="w-full mb-2 p-2 border rounded" placeholder="Start Date" />
-              <input type="date" value={edu.endDate} onChange={e => {
+              <input id={`education-end-${idx}`} name={`education-end-${idx}`} autoComplete="off" type="date" value={edu.endDate} onChange={e => {
                 const updated = { ...edu, endDate: e.target.value };
                 const newList = edit.education.map((e_, i) => i === idx ? updated : e_);
                 setEdit({ ...edit, education: newList });
@@ -336,16 +545,17 @@ export default function App() {
             <button onClick={() => setEdit({ ...edit, education: edit.education.filter((_, i) => i !== idx) })} className="bg-red-500 text-white px-2 rounded">Delete</button>
           </div>
         ))}
-        <button onClick={() => setEdit({ ...edit, education: [...edit.education, { name: '', degree: '', startDate: '', endDate: '' }] })} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6">Add Education</button>
+        <button onClick={() => setEdit({ ...edit, education: [...edit.education, { name: '', degree: '', startDate: '', endDate: '' }] })} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Education</button>
         <div className="flex gap-4 mt-4">
-          <button onClick={exportData} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Export JSON</button>
-          <button onClick={clearAll} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Clear All</button>
+          <button onClick={exportData} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 hover-blink">Export JSON</button>
+          <button onClick={importData} className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 hover-blink">Import JSON</button>
+          <button onClick={clearAll} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 hover-blink">Clear All</button>
         </div>
         <hr className="my-6" />
         <h3 className="text-lg font-semibold mb-2">Core Competencies</h3>
         {edit.coreCompetencies.map((cat, idx) => (
           <div key={idx} className="mb-2 flex items-center gap-2">
-            <input
+            <input id={`corecomp-category-${idx}`} name={`corecomp-category-${idx}`} autoComplete="off"
               placeholder="Category Name"
               value={cat.category}
               onChange={e => {
@@ -355,7 +565,7 @@ export default function App() {
               }}
               className="flex-1 p-2 border rounded"
             />
-            <input
+            <input id={`corecomp-description-${idx}`} name={`corecomp-description-${idx}`} autoComplete="off"
               placeholder="Description"
               value={cat.description}
               onChange={e => {
@@ -368,12 +578,12 @@ export default function App() {
             <button onClick={() => deleteCoreCompetency(idx)} className="bg-red-500 text-white px-2 rounded">Delete</button>
           </div>
         ))}
-        <button onClick={addCoreCompetency} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6">Add Core Competency</button>
+        <button onClick={addCoreCompetency} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Core Competency</button>
         <hr className="my-6" />
         <h3 className="text-lg font-semibold mb-2">Additional Details</h3>
         {(edit.additionalDetails || []).map((item, idx) => (
           <div key={idx} className="mb-2 flex items-center gap-2">
-            <input
+            <input id={`add-detail-category-${idx}`} name={`add-detail-category-${idx}`} autoComplete="off"
               placeholder="Category Name"
               value={item.category}
               onChange={e => {
@@ -383,7 +593,7 @@ export default function App() {
               }}
               className="flex-1 p-2 border rounded"
             />
-            <input
+            <input id={`add-detail-description-${idx}`} name={`add-detail-description-${idx}`} autoComplete="off"
               placeholder="Description"
               value={item.description}
               onChange={e => {
@@ -396,143 +606,143 @@ export default function App() {
             <button onClick={() => deleteAdditionalDetail(idx)} className="bg-red-500 text-white px-2 rounded">Delete</button>
           </div>
         ))}
-        <button onClick={addAdditionalDetail} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6">Add Additional Detail</button>
+        <button onClick={addAdditionalDetail} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Additional Detail</button>
         <hr className="my-6" />
         <h3 className="text-lg font-semibold mb-2">Skills</h3>
         {edit.skills.map((skill, idx) => (
           <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
             <div className="flex gap-2 mb-2">
-              <input placeholder="Skill Name" value={skill.name} onChange={e => handleSkillChange(idx, 'name', e.target.value)} className="flex-1 p-2 border rounded" />
-              <input placeholder="Category" value={skill.category} onChange={e => handleSkillChange(idx, 'category', e.target.value)} className="flex-1 p-2 border rounded" />
-              <input placeholder="Proficiency" value={skill.proficiency} onChange={e => handleSkillChange(idx, 'proficiency', e.target.value)} className="flex-1 p-2 border rounded" />
+              <input id={`skill-name-${idx}`} name={`skill-name-${idx}`} autoComplete="off" placeholder="Skill Name" value={skill.name} onChange={e => handleSkillChange(idx, 'name', e.target.value)} className="flex-1 p-2 border rounded" />
+              <input id={`skill-category-${idx}`} name={`skill-category-${idx}`} autoComplete="off" placeholder="Category" value={skill.category} onChange={e => handleSkillChange(idx, 'category', e.target.value)} className="flex-1 p-2 border rounded" />
+              <input id={`skill-proficiency-${idx}`} name={`skill-proficiency-${idx}`} autoComplete="off" placeholder="Proficiency" value={skill.proficiency} onChange={e => handleSkillChange(idx, 'proficiency', e.target.value)} className="flex-1 p-2 border rounded" />
               <button onClick={() => deleteSkill(idx)} className="bg-red-500 text-white px-2 rounded">Delete</button>
             </div>
           </div>
         ))}
-        <button onClick={addSkill} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6">Add Skill</button>
+        <button onClick={addSkill} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Skill</button>
         <hr className="my-6" />
         <h3 className="text-lg font-semibold mb-2">Projects</h3>
         {edit.projects.map((project, idx) => (
           <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
-            <input placeholder="Project Name" value={project.name} onChange={e => handleProjectChange(idx, 'name', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <textarea placeholder="Description" value={project.description} onChange={e => handleProjectChange(idx, 'description', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <input placeholder="Technologies Used (comma separated)" value={Array.isArray(project.technologiesUsed) ? project.technologiesUsed.join(', ') : ''} onChange={e => handleProjectChange(idx, 'technologiesUsed', e.target.value.split(',').map(s => s.trim()))} className="w-full mb-2 p-2 border rounded" />
+            <input id={`project-name-${idx}`} name={`project-name-${idx}`} autoComplete="off" placeholder="Project Name" value={project.name} onChange={e => handleProjectChange(idx, 'name', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+            <textarea id={`project-description-${idx}`} name={`project-description-${idx}`} autoComplete="off" placeholder="Description" value={project.description} onChange={e => handleProjectChange(idx, 'description', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+            <input id={`project-tech-${idx}`} name={`project-tech-${idx}`} autoComplete="off" placeholder="Technologies Used (comma separated)" value={Array.isArray(project.technologiesUsed) ? project.technologiesUsed.join(', ') : ''} onChange={e => handleProjectChange(idx, 'technologiesUsed', e.target.value.split(',').map(s => s.trim()))} className="w-full mb-2 p-2 border rounded" />
             <div className="flex gap-2">
-              <input type="date" value={project.date} onChange={e => handleProjectChange(idx, 'date', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-              <input type="date" value={project.endDate || ''} onChange={e => handleProjectChange(idx, 'endDate', e.target.value)} className="w-full mb-2 p-2 border rounded" placeholder="End Date" />
+              <input id={`project-start-${idx}`} name={`project-start-${idx}`} autoComplete="off" type="date" value={project.date} onChange={e => handleProjectChange(idx, 'date', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+              <input id={`project-end-${idx}`} name={`project-end-${idx}`} autoComplete="off" type="date" value={project.endDate || ''} onChange={e => handleProjectChange(idx, 'endDate', e.target.value)} className="w-full mb-2 p-2 border rounded" placeholder="End Date" />
             </div>
             <button onClick={() => deleteProject(idx)} className="bg-red-500 text-white px-2 rounded">Delete</button>
           </div>
         ))}
-        <button onClick={addProject} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Add Project</button>
+        <button onClick={addProject} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hover-blink">Add Project</button>
       </div>
 
       {/* Display Section */}
-      <div className="flex-2 pl-0 md:pl-8">
-        <div className="flex items-center gap-6 mb-4">
-          {info.imageUrl && <img src={info.imageUrl} alt="Profile" className="w-24 h-24 rounded-full object-cover border" />}
+      <div className="flex-2 pl-0 md:pl-8 text-sm" id="portfolio-root" style={{ scrollMarginTop: '80px' }}>
+        <div className="flex items-center gap-4 mb-2">
+          {info.imageUrl && <img src={info.imageUrl} alt="Profile" className="w-16 h-16 rounded-full object-cover border" />}
           <div>
-            <h1 className="text-3xl font-bold mb-2">{info.name}</h1>
-            <p className="text-gray-700 mb-2">{info.location}</p>
-            <p className="text-gray-700 mb-2">{info.email}</p>
-            <p className="text-gray-700 mb-2">{info.linkedin}</p>
+            <h1 className="text-2xl font-bold mb-1">{info.name}</h1>
+            <p className="text-gray-700">{info.location} • {info.email}{info.linkedin ? ` • ${info.linkedin}` : ''}</p>
           </div>
         </div>
-        <p className="text-gray-700 mb-4">{info.bio}</p>
-        <section className="mb-4">
-          <h2 className="text-xl font-semibold mb-2">Professional Summary</h2>
+        {info.bio && <p className="text-gray-700 mb-3">{info.bio}</p>}
+        <section className="mb-3">
+          <h2 className="text-lg font-semibold mb-1">Summary</h2>
           <p className="text-gray-700">{info.professionalSummary}</p>
         </section>
-        <section className="mb-4">
-          <h2 className="text-xl font-semibold mb-2">Languages</h2>
-          <ul className="list-disc pl-5">
-            {(Array.isArray(info.languages) ? info.languages : []).map((lang, idx) => (
-              <li key={idx}>{lang}</li>
-            ))}
-          </ul>
-        </section>
-        <section className="mb-4">
-          <h2 className="text-xl font-semibold mb-2">Education</h2>
-          <ul className="list-disc pl-5">
-            {(Array.isArray(info.education) ? info.education : []).map((edu, idx) => (
-              <li key={idx}>
-                <span className="font-bold">{edu.name}</span> — {edu.degree} ({formatDate(edu.startDate)} - {edu.endDate ? formatDate(edu.endDate) : 'Present'})
-              </li>
-            ))}
-          </ul>
-        </section>
-        {/* Core Competencies Section */}
-        <section className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Core Competencies</h2>
-          <ul className="list-disc pl-5">
-            {info.coreCompetencies.map((cat, idx) => (
-              <li key={idx}>
-                <span className="font-bold">{cat.category}</span>: {cat.description}
-              </li>
-            ))}
-          </ul>
-        </section>
-        {/* Additional Details Section */}
-        {info.additionalDetails && info.additionalDetails.length > 0 && (
-          <section className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Additional Details</h2>
-            <ul className="list-disc pl-5">
-              {info.additionalDetails.map((item, idx) => (
-                <li key={idx}>
-                  <span className="font-bold">{item.category}</span>: {item.description}
-                </li>
-              ))}
-            </ul>
+        {(Array.isArray(info.languages) && info.languages.length > 0) && (
+          <section className="mb-3">
+            <h2 className="text-lg font-semibold mb-1">Languages</h2>
+            <p className="text-gray-700">{info.languages.join(', ')}</p>
           </section>
         )}
-        <section className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Skills</h2>
-          {Object.entries(
-            info.skills.reduce((acc, skill) => {
-              acc[skill.category] = acc[skill.category] || [];
-              acc[skill.category].push(skill);
-              return acc;
-            }, {} as Record<string, Skill[]>)
-          ).map(([cat, skills]) => (
-            <div key={cat} className="mb-2">
-              <h3 className="font-bold text-gray-800">{cat}</h3>
-              <ul className="list-disc pl-5">
-                {skills.map((skill, idx) => (
-                  <li key={idx}>{skill.name} <span className="text-xs text-gray-500">({skill.proficiency})</span></li>
-                ))}
-              </ul>
+        {(Array.isArray(info.education) && info.education.length > 0) && (
+          <section className="mb-3">
+            <h2 className="text-lg font-semibold mb-1">Education</h2>
+            <div className="space-y-1">
+              {info.education.map((edu, idx) => (
+                <div key={idx} className="text-gray-700">
+                  <span className="font-semibold text-gray-900">{edu.name}</span> — {edu.degree} ({formatDate(edu.startDate)} - {edu.endDate ? formatDate(edu.endDate) : 'Present'})
+                </div>
+              ))}
             </div>
-          ))}
-        </section>
-        <section className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Projects</h2>
-          <ul className="list-disc pl-5">
-            {info.projects.map((project, idx) => (
-              <li key={idx} className="mb-2">
-                <span className="font-bold">{project.name}</span> ({formatDate(project.date)}
-                {project.endDate ? ` - ${formatDate(project.endDate)}` : ' - Present'}): {project.description}
-                <br />
-                <span className="text-xs text-gray-500">Technologies Used: {(project.technologiesUsed && Array.isArray(project.technologiesUsed) ? project.technologiesUsed.join(', ') : '')}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section>
-          <h2 className="text-xl font-semibold mb-2">Contact</h2>
-          <p>Email: <span className="text-blue-700">{info.email}</span></p>
-          <p>LinkedIn: <span className="text-blue-700">{info.linkedin}</span></p>
-          {info.resumeUrl && (
-            <p>Resume: <a href={info.resumeUrl} target="_blank" rel="noreferrer" className="text-blue-700 underline">View Resume</a></p>
-          )}
+          </section>
+        )}
+        {info.coreCompetencies && info.coreCompetencies.length > 0 && (
+          <section className="mb-3">
+            <h2 className="text-lg font-semibold mb-1">Core Competencies</h2>
+            <div className="space-y-1">
+              {info.coreCompetencies.map((cat, idx) => (
+                <div key={idx} className="text-gray-700">
+                  <span className="font-semibold text-gray-900">{cat.category}</span>: {cat.description}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        {info.skills && info.skills.length > 0 && (
+          <section className="mb-3">
+            <h2 className="text-lg font-semibold mb-1">Skills</h2>
+            <div className="space-y-1">
+              {Object.entries(
+                info.skills.reduce((acc, skill) => {
+                  acc[skill.category] = acc[skill.category] || [] as string[];
+                  acc[skill.category].push(`${skill.name}${skill.proficiency ? ` (${skill.proficiency})` : ''}`);
+                  return acc;
+                }, {} as Record<string, string[]>)
+              ).map(([cat, skills]) => (
+                <div key={cat} className="text-gray-700">
+                  <span className="font-semibold text-gray-900">{cat}:</span> {skills.join(', ')}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        {info.projects && info.projects.length > 0 && (
+          <section className="mb-3">
+            <h2 className="text-lg font-semibold mb-1">Projects</h2>
+            <div className="space-y-1">
+              {info.projects.slice(0, 6).map((project, idx) => (
+                <div key={idx} className="text-gray-700">
+                  <span className="font-semibold text-gray-900">{project.name}</span> ({formatDate(project.date)}{project.endDate ? ` - ${formatDate(project.endDate)}` : ' - Present'}) — {project.description}
+                  {project.technologiesUsed?.length ? <span className="text-xs text-gray-500"> — {project.technologiesUsed.join(', ')}</span> : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        {info.additionalDetails && info.additionalDetails.length > 0 && (
+          <section className="mb-3">
+            <h2 className="text-lg font-semibold mb-1">Additional Details</h2>
+            <div className="space-y-1">
+              {info.additionalDetails.map((item, idx) => (
+                <div key={idx} className="text-gray-700">
+                  <span className="font-semibold text-gray-900">{item.category}</span>: {item.description}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+        <section className="mb-2">
+          <h2 className="text-lg font-semibold mb-1">Contact</h2>
+          <p className="text-gray-700">{info.email}{info.linkedin ? ` • ${info.linkedin}` : ''}</p>
         </section>
       </div>
       {/* Fixed button to scroll to portfolio */}
+      <button
+        onClick={downloadCV}
+        className="fixed bottom-16 right-4 z-50 bg-purple-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-purple-700 hover-blink"
+        title="Download CV as PDF"
+      >
+        Download CV
+      </button>
       <button
         onClick={() => {
           const el = document.getElementById('portfolio-root');
           if (el) el.scrollIntoView({ behavior: 'smooth' });
         }}
-        className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700"
+        className="fixed bottom-4 right-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 hover-blink"
         title="Go to Portfolio"
       >
         View Portfolio

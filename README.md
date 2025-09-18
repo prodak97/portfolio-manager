@@ -18,6 +18,8 @@ A React TypeScript application for managing your projects and organizing your sk
 - **Additional Details**: Add any extra categorized details similar to core competencies
 - **Resume Link**: Store a resume URL and expose a "View Resume" link in the portfolio
 - **Quick Navigation**: Fixed "View Portfolio" button to smoothly scroll to the portfolio section
+- **Download CV (PDF)**: One-click PDF export of the portfolio view
+- **Import/Export JSON**: Load and save all portfolio data via JSON files
 
 ## Data Safety Features
 
@@ -86,6 +88,15 @@ Before running this application, you need to install Node.js and npm:
 - **Projects**: Add projects with description, technologies, and dates
 - **Quick Navigation**: Use the fixed "View Portfolio" button to jump to the portfolio display
 
+### Export Your CV as PDF
+- Click the fixed "Download CV" button (bottom-right) to export the current portfolio view as a multi-page A4 PDF.
+- The PDF uses a self-contained, print-friendly resume layout (no Tailwind) for reliability.
+- Tip: Keep text concise; projects are condensed (top 6) to fit fewer pages.
+
+### Import/Export Your Data
+- Export: Use "Export JSON" in the editor to download `portfolio-data.json`.
+- Import: Use "Import JSON" to select a JSON file and populate all fields.
+
 ### Data Persistence
 - All data is automatically saved to your browser's localStorage
 - Data persists between browser sessions
@@ -122,6 +133,8 @@ portfolio-manager/
 - **Vite** - Build tool and dev server
 - **CSS3** - Styling
 - **localStorage** - Data persistence
+- **html2canvas + jsPDF** - Client-side PDF generation for the CV export
+- **TypeScript + React** - Typed UI and data flow
 
 ## Customization
 
@@ -150,6 +163,17 @@ If you encounter issues:
 - Implemented Resume URL field and "View Resume" link in Contact.
 - Added fixed "View Portfolio" button for smooth scrolling to portfolio.
 - Hardened storage with safe JSON parsing for primary and backup data.
+- Added PDF export: fixed "Download CV" button using html2canvas and jsPDF.
+- Implemented self-contained CV rendering for PDF (condensed, print-friendly).
+- Added Import JSON to load entire portfolio data.
+- Improved accessibility: ids/names on fields and appropriate autocomplete attributes.
+
+## Troubleshooting
+
+- Blank PDF output: The app now renders a separate, inline-styled resume for export to avoid CSS incompatibilities; if still blank, check console for image CORS warnings.
+- Storage quota exceeded: Backups auto-trim; clear site storage if needed.
+- Import errors: Ensure the JSON matches the schema; at minimum `name` and `email` are required.
+- Moved additional details to the end of portfolio.
 
 ## Future Enhancements
 
