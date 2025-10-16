@@ -9,11 +9,15 @@ function formatDate(dateStr?: string) {
   return `${day}/${month}/${year}`;
 }
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import RuslanPortfolio from './RuslanPortfolio';
+import { PortfolioContext } from './PortfolioProvider';
 import { jsPDF } from 'jspdf';
-import './styles/main.css';
+import './App.css';
 
 // Types
+type ViewMode = 'view' | 'edit';
+
 type Skill = {
   name: string;
   category: string;
@@ -29,12 +33,14 @@ type AdditionalDetail = {
   category: string;
   description: string;
 };
+
 type Project = {
   name: string;
   description: string;
   technologiesUsed: string[];
   date: string;
   endDate?: string;
+  website?: string;
 };
 
 type EducationEntry = {
@@ -44,7 +50,7 @@ type EducationEntry = {
   endDate: string;
 };
 
-type PortfolioInfo = {
+export type PortfolioInfo = {
   name: string;
   bio: string;
   professionalSummary: string;
@@ -62,7 +68,7 @@ type PortfolioInfo = {
 };
 // Default Data
 const defaultInfo: PortfolioInfo = {
-  name: 'Jane Doe',
+  name: 'Hui Sobachiy',
   bio: 'Web Developer | Designer | Programmer',
   professionalSummary: 'Experienced full-stack developer with a passion for building scalable web applications and leading engineering teams.',
   email: 'jane.doe@email.com',
@@ -161,30 +167,10 @@ function saveToLocalStorage(data: PortfolioInfo): { success: boolean; error?: st
   }
 }
 
-function loadFromLocalStorage(): PortfolioInfo {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-    return defaultInfo;
-  } catch {
-    // Try backup recovery
-    const backups = safeJsonParse<string[]>(localStorage.getItem(BACKUP_KEY), []);
-    if (backups.length > 0) return JSON.parse(backups[0]);
-    return defaultInfo;
-  }
-}
 
-export default function App() {
-  const [info, setInfo] = useState<PortfolioInfo>(() => {
-    const loaded = loadFromLocalStorage();
-    // Ensure coreCompetencies is always defined
-    return {
-      ...loaded,
-      coreCompetencies: loaded.coreCompetencies || [],
-      additionalDetails: (loaded as any).additionalDetails || [],
-      resumeUrl: (loaded as any).resumeUrl || '',
-    };
-  });
+const App: React.FC = () => {
+  // Ensure the component returns JSX
+  const { info, setInfo } = useContext(PortfolioContext);
   const [edit, setEdit] = useState<PortfolioInfo>(info);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
@@ -273,17 +259,17 @@ export default function App() {
   function addCoreCompetency() {
     setEdit({ ...edit, coreCompetencies: [...edit.coreCompetencies, { category: '', description: '' }] });
   }
-  function deleteCoreCompetency(idx: number) {
-    setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.filter((_, i) => i !== idx) });
-  }
+  //function deleteCoreCompetency(idx: number) {
+    //setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.filter((_, i) => i !== idx) });
+  //}
 
   // Additional Details management
   function addAdditionalDetail() {
     setEdit({ ...edit, additionalDetails: [...(edit.additionalDetails || []), { category: '', description: '' }] });
   }
-  function deleteAdditionalDetail(idx: number) {
-    setEdit({ ...edit, additionalDetails: (edit.additionalDetails || []).filter((_, i) => i !== idx) });
-  }
+  //function deleteAdditionalDetail(idx: number) {
+    //setEdit({ ...edit, additionalDetails: (edit.additionalDetails || []).filter((_, i) => i !== idx) });
+  //}
 
   // Export data
   function exportData() {
@@ -459,9 +445,9 @@ export default function App() {
       setError('Failed to generate PDF.');
       // eslint-disable-next-line no-console
       console.error('PDF generation error', e);
-    }
   }
 
+  // Clear all data
   // Clear all data
   function clearAll() {
     if (window.confirm('Are you sure you want to clear all data?')) {
@@ -471,16 +457,28 @@ export default function App() {
     }
   }
 
-  // Responsive UI and feedback
+  const [viewMode, setViewMode] = useState<ViewMode>('edit');
+
   return (
-    <div className="flex flex-col md:flex-row gap-10 p-4 md:p-8 max-w-5xl mx-auto bg-white rounded-xl shadow-lg mt-6">
-      {/* Editing Section */}
-      <div className="flex-1 border-b md:border-b-0 md:border-r border-gray-200 pb-6 md:pr-8">
-        <h2 className="text-xl font-semibold mb-4">Edit Portfolio</h2>
-        <div className="mb-2 text-sm text-gray-500">
-          {saving ? <span>{saveMsg}</span> : saveMsg ? <span>{saveMsg}</span> : null}
-          {error && <span className="text-red-600">{error}</span>}
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <button
+        onClick={() => setViewMode(viewMode === 'view' ? 'edit' : 'view')}
+        className="mode-toggle"
+      >
+        {viewMode === 'view' ? 'Edit Portfolio' : 'View Portfolio'}
+      </button>
+
+      {viewMode === 'view' ? (
+        <RuslanPortfolio />
+      ) : (
+        <div className="flex flex-col md:flex-row gap-10 p-4 md:p-8 max-w-5xl mx-auto bg-white rounded-xl shadow-lg mt-6">
+          {/* Editing Section */}
+          <div className="flex-1 border-b md:border-b-0 md:border-r border-gray-200 pb-6 md:pr-8">
+            <h2 className="text-xl font-semibold mb-4">Edit Portfolio</h2>
+            <div className="mb-2 text-sm text-gray-500">
+              {saving ? 'Saving...' : saveMsg ? saveMsg : null}
+              {error && <div className="text-red-500">{error}</div>}
+            </div>
         <label className="block mb-2 font-medium">
           Name:
           <input id="name" name="name" autoComplete="name" value={edit.name} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
@@ -503,7 +501,7 @@ export default function App() {
         </label>
         <label className="block mb-2 font-medium">
           Resume URL:
-          <input id="resumeUrl" name="resumeUrl" autoComplete="url" value={(edit as any).resumeUrl || ''} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+          <input id="resumeUrl" name="resumeUrl" autoComplete="url" value={edit.resumeUrl || ''} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <label className="block mb-2 font-medium">
           Location:
@@ -518,31 +516,13 @@ export default function App() {
           <input id="languages" name="languages" autoComplete="off" value={Array.isArray(edit.languages) ? edit.languages.join(', ') : ''} onChange={e => setEdit({ ...edit, languages: e.target.value.split(',').map(l => l.trim()) })} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
         </label>
         <h3 className="text-lg font-semibold mb-2">Education</h3>
-  {(Array.isArray(edit.education) ? edit.education : []).map((edu, idx) => (
+        {(Array.isArray(edit.education) ? edit.education : []).map((edu, idx) => (
           <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
-            <input id={`education-name-${idx}`} name={`education-name-${idx}`} autoComplete="organization" placeholder="Institution Name" value={edu.name} onChange={e => {
-              const updated = { ...edu, name: e.target.value };
-              const newList = edit.education.map((e_, i) => i === idx ? updated : e_);
-              setEdit({ ...edit, education: newList });
-            }} className="w-full mb-2 p-2 border rounded" />
-            <input id={`education-degree-${idx}`} name={`education-degree-${idx}`} autoComplete="off" placeholder="Degree" value={edu.degree} onChange={e => {
-              const updated = { ...edu, degree: e.target.value };
-              const newList = edit.education.map((e_, i) => i === idx ? updated : e_);
-              setEdit({ ...edit, education: newList });
-            }} className="w-full mb-2 p-2 border rounded" />
-            <div className="flex gap-2">
-              <input id={`education-start-${idx}`} name={`education-start-${idx}`} autoComplete="off" type="date" value={edu.startDate} onChange={e => {
-                const updated = { ...edu, startDate: e.target.value };
-                const newList = edit.education.map((e_, i) => i === idx ? updated : e_);
-                setEdit({ ...edit, education: newList });
-              }} className="w-full mb-2 p-2 border rounded" placeholder="Start Date" />
-              <input id={`education-end-${idx}`} name={`education-end-${idx}`} autoComplete="off" type="date" value={edu.endDate} onChange={e => {
-                const updated = { ...edu, endDate: e.target.value };
-                const newList = edit.education.map((e_, i) => i === idx ? updated : e_);
-                setEdit({ ...edit, education: newList });
-              }} className="w-full mb-2 p-2 border rounded" placeholder="End Date" />
-            </div>
-            <button onClick={() => setEdit({ ...edit, education: edit.education.filter((_, i) => i !== idx) })} className="bg-red-500 text-white px-2 rounded">Delete</button>
+            <input id={`education-name-${idx}`} name={`education-name-${idx}`} autoComplete="organization" placeholder="Institution Name" value={edu.name} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, name: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
+            <input id={`education-degree-${idx}`} name={`education-degree-${idx}`} autoComplete="off" placeholder="Degree" value={edu.degree} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, degree: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
+            <input id={`education-start-${idx}`} name={`education-start-${idx}`} autoComplete="off" placeholder="Start Date" value={edu.startDate} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, startDate: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
+            <input id={`education-end-${idx}`} name={`education-end-${idx}`} autoComplete="off" placeholder="End Date" value={edu.endDate} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, endDate: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
+            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => setEdit({ ...edit, education: edit.education.filter((_, i) => i !== idx) })}>Delete</button>
           </div>
         ))}
         <button onClick={() => setEdit({ ...edit, education: [...edit.education, { name: '', degree: '', startDate: '', endDate: '' }] })} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Education</button>
@@ -558,24 +538,16 @@ export default function App() {
             <input id={`corecomp-category-${idx}`} name={`corecomp-category-${idx}`} autoComplete="off"
               placeholder="Category Name"
               value={cat.category}
-              onChange={e => {
-                const updated = { ...cat, category: e.target.value };
-                const newList = edit.coreCompetencies.map((c, i) => i === idx ? updated : c);
-                setEdit({ ...edit, coreCompetencies: newList });
-              }}
+              onChange={e => setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.map((c, i) => i === idx ? { ...c, category: e.target.value } : c) })}
               className="flex-1 p-2 border rounded"
             />
             <input id={`corecomp-description-${idx}`} name={`corecomp-description-${idx}`} autoComplete="off"
               placeholder="Description"
               value={cat.description}
-              onChange={e => {
-                const updated = { ...cat, description: e.target.value };
-                const newList = edit.coreCompetencies.map((c, i) => i === idx ? updated : c);
-                setEdit({ ...edit, coreCompetencies: newList });
-              }}
+              onChange={e => setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.map((c, i) => i === idx ? { ...c, description: e.target.value } : c) })}
               className="flex-1 p-2 border rounded"
             />
-            <button onClick={() => deleteCoreCompetency(idx)} className="bg-red-500 text-white px-2 rounded">Delete</button>
+            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.filter((_, i) => i !== idx) })}>Delete</button>
           </div>
         ))}
         <button onClick={addCoreCompetency} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Core Competency</button>
@@ -586,24 +558,16 @@ export default function App() {
             <input id={`add-detail-category-${idx}`} name={`add-detail-category-${idx}`} autoComplete="off"
               placeholder="Category Name"
               value={item.category}
-              onChange={e => {
-                const updated = { ...item, category: e.target.value };
-                const newList = (edit.additionalDetails || []).map((c, i) => i === idx ? updated : c);
-                setEdit({ ...edit, additionalDetails: newList });
-              }}
+              onChange={e => setEdit({ ...edit, additionalDetails: edit.additionalDetails.map((d, i) => i === idx ? { ...d, category: e.target.value } : d) })}
               className="flex-1 p-2 border rounded"
             />
             <input id={`add-detail-description-${idx}`} name={`add-detail-description-${idx}`} autoComplete="off"
               placeholder="Description"
               value={item.description}
-              onChange={e => {
-                const updated = { ...item, description: e.target.value };
-                const newList = (edit.additionalDetails || []).map((c, i) => i === idx ? updated : c);
-                setEdit({ ...edit, additionalDetails: newList });
-              }}
+              onChange={e => setEdit({ ...edit, additionalDetails: edit.additionalDetails.map((d, i) => i === idx ? { ...d, description: e.target.value } : d) })}
               className="flex-1 p-2 border rounded"
             />
-            <button onClick={() => deleteAdditionalDetail(idx)} className="bg-red-500 text-white px-2 rounded">Delete</button>
+            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => setEdit({ ...edit, additionalDetails: edit.additionalDetails.filter((_, i) => i !== idx) })}>Delete</button>
           </div>
         ))}
         <button onClick={addAdditionalDetail} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Additional Detail</button>
@@ -611,12 +575,10 @@ export default function App() {
         <h3 className="text-lg font-semibold mb-2">Skills</h3>
         {edit.skills.map((skill, idx) => (
           <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
-            <div className="flex gap-2 mb-2">
-              <input id={`skill-name-${idx}`} name={`skill-name-${idx}`} autoComplete="off" placeholder="Skill Name" value={skill.name} onChange={e => handleSkillChange(idx, 'name', e.target.value)} className="flex-1 p-2 border rounded" />
-              <input id={`skill-category-${idx}`} name={`skill-category-${idx}`} autoComplete="off" placeholder="Category" value={skill.category} onChange={e => handleSkillChange(idx, 'category', e.target.value)} className="flex-1 p-2 border rounded" />
-              <input id={`skill-proficiency-${idx}`} name={`skill-proficiency-${idx}`} autoComplete="off" placeholder="Proficiency" value={skill.proficiency} onChange={e => handleSkillChange(idx, 'proficiency', e.target.value)} className="flex-1 p-2 border rounded" />
-              <button onClick={() => deleteSkill(idx)} className="bg-red-500 text-white px-2 rounded">Delete</button>
-            </div>
+            <input id={`skill-name-${idx}`} name={`skill-name-${idx}`} autoComplete="off" placeholder="Skill Name" value={skill.name} onChange={e => handleSkillChange(idx, 'name', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+            <input id={`skill-category-${idx}`} name={`skill-category-${idx}`} autoComplete="off" placeholder="Category" value={skill.category} onChange={e => handleSkillChange(idx, 'category', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+            <input id={`skill-proficiency-${idx}`} name={`skill-proficiency-${idx}`} autoComplete="off" placeholder="Proficiency" value={skill.proficiency} onChange={e => handleSkillChange(idx, 'proficiency', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => deleteSkill(idx)}>Delete</button>
           </div>
         ))}
         <button onClick={addSkill} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Skill</button>
@@ -627,126 +589,19 @@ export default function App() {
             <input id={`project-name-${idx}`} name={`project-name-${idx}`} autoComplete="off" placeholder="Project Name" value={project.name} onChange={e => handleProjectChange(idx, 'name', e.target.value)} className="w-full mb-2 p-2 border rounded" />
             <textarea id={`project-description-${idx}`} name={`project-description-${idx}`} autoComplete="off" placeholder="Description" value={project.description} onChange={e => handleProjectChange(idx, 'description', e.target.value)} className="w-full mb-2 p-2 border rounded" />
             <input id={`project-tech-${idx}`} name={`project-tech-${idx}`} autoComplete="off" placeholder="Technologies Used (comma separated)" value={Array.isArray(project.technologiesUsed) ? project.technologiesUsed.join(', ') : ''} onChange={e => handleProjectChange(idx, 'technologiesUsed', e.target.value.split(',').map(s => s.trim()))} className="w-full mb-2 p-2 border rounded" />
-            <div className="flex gap-2">
-              <input id={`project-start-${idx}`} name={`project-start-${idx}`} autoComplete="off" type="date" value={project.date} onChange={e => handleProjectChange(idx, 'date', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-              <input id={`project-end-${idx}`} name={`project-end-${idx}`} autoComplete="off" type="date" value={project.endDate || ''} onChange={e => handleProjectChange(idx, 'endDate', e.target.value)} className="w-full mb-2 p-2 border rounded" placeholder="End Date" />
-            </div>
-            <button onClick={() => deleteProject(idx)} className="bg-red-500 text-white px-2 rounded">Delete</button>
+            <input id={`project-date-${idx}`} name={`project-date-${idx}`} autoComplete="off" placeholder="Start Date" value={project.date} onChange={e => handleProjectChange(idx, 'date', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+            <input id={`project-endDate-${idx}`} name={`project-endDate-${idx}`} autoComplete="off" placeholder="End Date" value={project.endDate || ''} onChange={e => handleProjectChange(idx, 'endDate', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+            <input id={`project-website-${idx}`} name={`project-website-${idx}`} autoComplete="off" placeholder="Website" value={project.website || ''} onChange={e => handleProjectChange(idx, 'website', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => deleteProject(idx)}>Delete</button>
           </div>
         ))}
         <button onClick={addProject} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hover-blink">Add Project</button>
       </div>
-
-      {/* Display Section */}
-      <div className="flex-2 pl-0 md:pl-8 text-sm" id="portfolio-root" style={{ scrollMarginTop: '80px' }}>
-        <div className="flex items-center gap-4 mb-2">
-          {info.imageUrl && <img src={info.imageUrl} alt="Profile" className="w-16 h-16 rounded-full object-cover border" />}
-          <div>
-            <h1 className="text-2xl font-bold mb-1">{info.name}</h1>
-            <p className="text-gray-700">{info.location} • {info.email}{info.linkedin ? ` • ${info.linkedin}` : ''}</p>
-          </div>
+      {/* Display Section (Home preview) can be added here if needed */}
         </div>
-        {info.bio && <p className="text-gray-700 mb-3">{info.bio}</p>}
-        <section className="mb-3">
-          <h2 className="text-lg font-semibold mb-1">Summary</h2>
-          <p className="text-gray-700">{info.professionalSummary}</p>
-        </section>
-        {(Array.isArray(info.languages) && info.languages.length > 0) && (
-          <section className="mb-3">
-            <h2 className="text-lg font-semibold mb-1">Languages</h2>
-            <p className="text-gray-700">{info.languages.join(', ')}</p>
-          </section>
-        )}
-        {(Array.isArray(info.education) && info.education.length > 0) && (
-          <section className="mb-3">
-            <h2 className="text-lg font-semibold mb-1">Education</h2>
-            <div className="space-y-1">
-              {info.education.map((edu, idx) => (
-                <div key={idx} className="text-gray-700">
-                  <span className="font-semibold text-gray-900">{edu.name}</span> — {edu.degree} ({formatDate(edu.startDate)} - {edu.endDate ? formatDate(edu.endDate) : 'Present'})
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-        {info.coreCompetencies && info.coreCompetencies.length > 0 && (
-          <section className="mb-3">
-            <h2 className="text-lg font-semibold mb-1">Core Competencies</h2>
-            <div className="space-y-1">
-              {info.coreCompetencies.map((cat, idx) => (
-                <div key={idx} className="text-gray-700">
-                  <span className="font-semibold text-gray-900">{cat.category}</span>: {cat.description}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-        {info.skills && info.skills.length > 0 && (
-          <section className="mb-3">
-            <h2 className="text-lg font-semibold mb-1">Skills</h2>
-            <div className="space-y-1">
-              {Object.entries(
-                info.skills.reduce((acc, skill) => {
-                  acc[skill.category] = acc[skill.category] || [] as string[];
-                  acc[skill.category].push(`${skill.name}${skill.proficiency ? ` (${skill.proficiency})` : ''}`);
-                  return acc;
-                }, {} as Record<string, string[]>)
-              ).map(([cat, skills]) => (
-                <div key={cat} className="text-gray-700">
-                  <span className="font-semibold text-gray-900">{cat}:</span> {skills.join(', ')}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-        {info.projects && info.projects.length > 0 && (
-          <section className="mb-3">
-            <h2 className="text-lg font-semibold mb-1">Projects</h2>
-            <div className="space-y-1">
-              {info.projects.slice(0, 6).map((project, idx) => (
-                <div key={idx} className="text-gray-700">
-                  <span className="font-semibold text-gray-900">{project.name}</span> ({formatDate(project.date)}{project.endDate ? ` - ${formatDate(project.endDate)}` : ' - Present'}) — {project.description}
-                  {project.technologiesUsed?.length ? <span className="text-xs text-gray-500"> — {project.technologiesUsed.join(', ')}</span> : null}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-        {info.additionalDetails && info.additionalDetails.length > 0 && (
-          <section className="mb-3">
-            <h2 className="text-lg font-semibold mb-1">Additional Details</h2>
-            <div className="space-y-1">
-              {info.additionalDetails.map((item, idx) => (
-                <div key={idx} className="text-gray-700">
-                  <span className="font-semibold text-gray-900">{item.category}</span>: {item.description}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-        <section className="mb-2">
-          <h2 className="text-lg font-semibold mb-1">Contact</h2>
-          <p className="text-gray-700">{info.email}{info.linkedin ? ` • ${info.linkedin}` : ''}</p>
-        </section>
-      </div>
-      {/* Fixed button to scroll to portfolio */}
-      <button
-        onClick={downloadCV}
-        className="fixed bottom-16 right-4 z-50 bg-purple-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-purple-700 hover-blink"
-        title="Download CV as PDF"
-      >
-        Download CV
-      </button>
-      <button
-        onClick={() => {
-          const el = document.getElementById('portfolio-root');
-          if (el) el.scrollIntoView({ behavior: 'smooth' });
-        }}
-        className="fixed bottom-4 right-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 hover-blink"
-        title="Go to Portfolio"
-      >
-        View Portfolio
-      </button>
+        );
     </div>
   );
-}
+};
+
+export default App;
