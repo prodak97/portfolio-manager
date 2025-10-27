@@ -1,5 +1,5 @@
 import React, { createContext, useState } from 'react';
-import { PortfolioInfo } from './App';
+import { PortfolioInfo,} from './App';
 
 const defaultInfo: PortfolioInfo = {
   name: 'Hui Sobachiy',

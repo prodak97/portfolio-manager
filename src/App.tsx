@@ -1,3 +1,9 @@
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import RuslanPortfolio from './RuslanPortfolio';
+import { PortfolioContext } from './PortfolioProvider';
+import { jsPDF } from 'jspdf';
+import './App.css';
+
 // Helper to format date as dd/mm/yy
 function formatDate(dateStr?: string) {
   if (!dateStr) return '';
@@ -8,12 +14,6 @@ function formatDate(dateStr?: string) {
   const year = String(d.getFullYear()).slice(-2);
   return `${day}/${month}/${year}`;
 }
-
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import RuslanPortfolio from './RuslanPortfolio';
-import { PortfolioContext } from './PortfolioProvider';
-import { jsPDF } from 'jspdf';
-import './App.css';
 
 // Types
 type ViewMode = 'view' | 'edit';
@@ -171,6 +171,7 @@ function saveToLocalStorage(data: PortfolioInfo): { success: boolean; error?: st
 const App: React.FC = () => {
   // Ensure the component returns JSX
   const { info, setInfo } = useContext(PortfolioContext);
+  const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [edit, setEdit] = useState<PortfolioInfo>(info);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
@@ -445,9 +446,9 @@ const App: React.FC = () => {
       setError('Failed to generate PDF.');
       // eslint-disable-next-line no-console
       console.error('PDF generation error', e);
+    }
   }
 
-  // Clear all data
   // Clear all data
   function clearAll() {
     if (window.confirm('Are you sure you want to clear all data?')) {
@@ -456,8 +457,6 @@ const App: React.FC = () => {
       saveToLocalStorage(defaultInfo);
     }
   }
-
-  const [viewMode, setViewMode] = useState<ViewMode>('edit');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -472,136 +471,142 @@ const App: React.FC = () => {
         <RuslanPortfolio />
       ) : (
         <div className="flex flex-col md:flex-row gap-10 p-4 md:p-8 max-w-5xl mx-auto bg-white rounded-xl shadow-lg mt-6">
-          {/* Editing Section */}
           <div className="flex-1 border-b md:border-b-0 md:border-r border-gray-200 pb-6 md:pr-8">
             <h2 className="text-xl font-semibold mb-4">Edit Portfolio</h2>
             <div className="mb-2 text-sm text-gray-500">
               {saving ? 'Saving...' : saveMsg ? saveMsg : null}
               {error && <div className="text-red-500">{error}</div>}
             </div>
-        <label className="block mb-2 font-medium">
-          Name:
-          <input id="name" name="name" autoComplete="name" value={edit.name} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-        </label>
-        <label className="block mb-2 font-medium">
-          Bio:
-          <textarea id="bio" name="bio" autoComplete="off" value={edit.bio} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-        </label>
-        <label className="block mb-2 font-medium">
-          Professional Summary:
-          <textarea id="professionalSummary" name="professionalSummary" autoComplete="off" value={edit.professionalSummary} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-        </label>
-        <label className="block mb-2 font-medium">
-          Email:
-          <input id="email" name="email" autoComplete="email" value={edit.email} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-        </label>
-        <label className="block mb-2 font-medium">
-          LinkedIn:
-          <input id="linkedin" name="linkedin" autoComplete="url" value={edit.linkedin} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-        </label>
-        <label className="block mb-2 font-medium">
-          Resume URL:
-          <input id="resumeUrl" name="resumeUrl" autoComplete="url" value={edit.resumeUrl || ''} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-        </label>
-        <label className="block mb-2 font-medium">
-          Location:
-          <input id="location" name="location" autoComplete="address-level2" value={edit.location} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-        </label>
-        <label className="block mb-2 font-medium">
-          Image URL:
-          <input id="imageUrl" name="imageUrl" autoComplete="url" value={edit.imageUrl} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-        </label>
-        <label className="block mb-2 font-medium">
-          Languages (comma separated):
-          <input id="languages" name="languages" autoComplete="off" value={Array.isArray(edit.languages) ? edit.languages.join(', ') : ''} onChange={e => setEdit({ ...edit, languages: e.target.value.split(',').map(l => l.trim()) })} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-        </label>
-        <h3 className="text-lg font-semibold mb-2">Education</h3>
-        {(Array.isArray(edit.education) ? edit.education : []).map((edu, idx) => (
-          <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
-            <input id={`education-name-${idx}`} name={`education-name-${idx}`} autoComplete="organization" placeholder="Institution Name" value={edu.name} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, name: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
-            <input id={`education-degree-${idx}`} name={`education-degree-${idx}`} autoComplete="off" placeholder="Degree" value={edu.degree} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, degree: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
-            <input id={`education-start-${idx}`} name={`education-start-${idx}`} autoComplete="off" placeholder="Start Date" value={edu.startDate} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, startDate: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
-            <input id={`education-end-${idx}`} name={`education-end-${idx}`} autoComplete="off" placeholder="End Date" value={edu.endDate} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, endDate: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
-            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => setEdit({ ...edit, education: edit.education.filter((_, i) => i !== idx) })}>Delete</button>
+            <label className="block mb-2 font-medium">
+              Name:
+              <input id="name" name="name" autoComplete="name" value={edit.name} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+            </label>
+            <label className="block mb-2 font-medium">
+              Bio:
+              <textarea id="bio" name="bio" autoComplete="off" value={edit.bio} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+            </label>
+            <label className="block mb-2 font-medium">
+              Professional Summary:
+              <textarea id="professionalSummary" name="professionalSummary" autoComplete="off" value={edit.professionalSummary} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+            </label>
+            <label className="block mb-2 font-medium">
+              Email:
+              <input id="email" name="email" autoComplete="email" value={edit.email} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+            </label>
+            <label className="block mb-2 font-medium">
+              LinkedIn:
+              <input id="linkedin" name="linkedin" autoComplete="url" value={edit.linkedin} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+            </label>
+            <label className="block mb-2 font-medium">
+              Resume URL:
+              <input id="resumeUrl" name="resumeUrl" autoComplete="url" value={edit.resumeUrl || ''} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+            </label>
+            <label className="block mb-2 font-medium">
+              Location:
+              <input id="location" name="location" autoComplete="address-level2" value={edit.location} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+            </label>
+            <label className="block mb-2 font-medium">
+              Image URL:
+              <input id="imageUrl" name="imageUrl" autoComplete="url" value={edit.imageUrl} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+            </label>
+            <label className="block mb-2 font-medium">
+              Languages (comma separated):
+              <input id="languages" name="languages" autoComplete="off" value={Array.isArray(edit.languages) ? edit.languages.join(', ') : ''} onChange={e => setEdit({ ...edit, languages: e.target.value.split(',').map(l => l.trim()) })} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
+            </label>
+            <h3 className="text-lg font-semibold mb-2">Education</h3>
+            {(Array.isArray(edit.education) ? edit.education : []).map((edu, idx) => (
+              <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
+                <input id={`education-name-${idx}`} name={`education-name-${idx}`} autoComplete="organization" placeholder="Institution Name" value={edu.name} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, name: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
+                <input id={`education-degree-${idx}`} name={`education-degree-${idx}`} autoComplete="off" placeholder="Degree" value={edu.degree} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, degree: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
+                <input id={`education-start-${idx}`} name={`education-start-${idx}`} autoComplete="off" placeholder="Start Date" value={edu.startDate} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, startDate: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
+                <input id={`education-end-${idx}`} name={`education-end-${idx}`} autoComplete="off" placeholder="End Date" value={edu.endDate} onChange={e => setEdit({ ...edit, education: edit.education.map((ed, i) => i === idx ? { ...ed, endDate: e.target.value } : ed) })} className="w-full mb-2 p-2 border rounded" />
+                <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => setEdit({ ...edit, education: edit.education.filter((_, i) => i !== idx) })}>Delete</button>
+              </div>
+            ))}
+            <button onClick={() => setEdit({ ...edit, education: [...edit.education, { name: '', degree: '', startDate: '', endDate: '' }] })} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Education</button>
+            <div className="flex gap-4 mt-4">
+              <button onClick={exportData} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 hover-blink">Export JSON</button>
+              <button onClick={importData} className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 hover-blink">Import JSON</button>
+              <button onClick={clearAll} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 hover-blink">Clear All</button>
+            </div>
+            <hr className="my-6" />
+            <h3 className="text-lg font-semibold mb-2">Core Competencies</h3>
+            {edit.coreCompetencies.map((cat, idx) => (
+              <div key={idx} className="mb-2 flex items-center gap-2">
+                <input id={`corecomp-category-${idx}`} name={`corecomp-category-${idx}`} autoComplete="off"
+                  placeholder="Category Name"
+                  value={cat.category}
+                  onChange={e => setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.map((c, i) => i === idx ? { ...c, category: e.target.value } : c) })}
+                  className="flex-1 p-2 border rounded"
+                />
+                <input id={`corecomp-description-${idx}`} name={`corecomp-description-${idx}`} autoComplete="off"
+                  placeholder="Description"
+                  value={cat.description}
+                  onChange={e => setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.map((c, i) => i === idx ? { ...c, description: e.target.value } : c) })}
+                  className="flex-1 p-2 border rounded"
+                />
+                <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.filter((_, i) => i !== idx) })}>Delete</button>
+              </div>
+            ))}
+            <button onClick={addCoreCompetency} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Core Competency</button>
+            <hr className="my-6" />
+            <h3 className="text-lg font-semibold mb-2">Additional Details</h3>
+            {(edit.additionalDetails || []).map((item, idx) => (
+              <div key={idx} className="mb-2 flex items-center gap-2">
+                <input id={`add-detail-category-${idx}`} name={`add-detail-category-${idx}`} autoComplete="off"
+                  placeholder="Category Name"
+                  value={item.category}
+                  onChange={e => setEdit({ ...edit, additionalDetails: edit.additionalDetails.map((d, i) => i === idx ? { ...d, category: e.target.value } : d) })}
+                  className="flex-1 p-2 border rounded"
+                />
+                <input id={`add-detail-description-${idx}`} name={`add-detail-description-${idx}`} autoComplete="off"
+                  placeholder="Description"
+                  value={item.description}
+                  onChange={e => setEdit({ ...edit, additionalDetails: edit.additionalDetails.map((d, i) => i === idx ? { ...d, description: e.target.value } : d) })}
+                  className="flex-1 p-2 border rounded"
+                />
+                <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => setEdit({ ...edit, additionalDetails: edit.additionalDetails.filter((_, i) => i !== idx) })}>Delete</button>
+              </div>
+            ))}
+            <button onClick={addAdditionalDetail} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Additional Detail</button>
+            <hr className="my-6" />
+            <h3 className="text-lg font-semibold mb-2">Skills</h3>
+            {edit.skills.map((skill, idx) => (
+              <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
+                <input id={`skill-name-${idx}`} name={`skill-name-${idx}`} autoComplete="off" placeholder="Skill Name" value={skill.name} onChange={e => handleSkillChange(idx, 'name', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+                <input id={`skill-category-${idx}`} name={`skill-category-${idx}`} autoComplete="off" placeholder="Category" value={skill.category} onChange={e => handleSkillChange(idx, 'category', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+                <input id={`skill-proficiency-${idx}`} name={`skill-proficiency-${idx}`} autoComplete="off" placeholder="Proficiency" value={skill.proficiency} onChange={e => handleSkillChange(idx, 'proficiency', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+                <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => deleteSkill(idx)}>Delete</button>
+              </div>
+            ))}
+            <button onClick={addSkill} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Skill</button>
+            <hr className="my-6" />
+            <h3 className="text-lg font-semibold mb-2">Projects</h3>
+            {edit.projects.map((project, idx) => (
+              <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
+                <input id={`project-name-${idx}`} name={`project-name-${idx}`} autoComplete="off" placeholder="Project Name" value={project.name} onChange={e => handleProjectChange(idx, 'name', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+                <textarea id={`project-description-${idx}`} name={`project-description-${idx}`} autoComplete="off" placeholder="Description" value={project.description} onChange={e => handleProjectChange(idx, 'description', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+                <input id={`project-tech-${idx}`} name={`project-tech-${idx}`} autoComplete="off" placeholder="Technologies Used (comma separated)" value={Array.isArray(project.technologiesUsed) ? project.technologiesUsed.join(', ') : ''} onChange={e => handleProjectChange(idx, 'technologiesUsed', e.target.value.split(',').map(s => s.trim()))} className="w-full mb-2 p-2 border rounded" />
+                <input id={`project-date-${idx}`} name={`project-date-${idx}`} autoComplete="off" placeholder="Start Date" value={project.date} onChange={e => handleProjectChange(idx, 'date', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+                <input id={`project-endDate-${idx}`} name={`project-endDate-${idx}`} autoComplete="off" placeholder="End Date" value={project.endDate || ''} onChange={e => handleProjectChange(idx, 'endDate', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+                <input id={`project-website-${idx}`} name={`project-website-${idx}`} autoComplete="off" placeholder="Website" value={project.website || ''} onChange={e => handleProjectChange(idx, 'website', e.target.value)} className="w-full mb-2 p-2 border rounded" />
+                <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => deleteProject(idx)}>Delete</button>
+              </div>
+            ))}
+            <button onClick={addProject} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hover-blink">Add Project</button>
           </div>
-        ))}
-        <button onClick={() => setEdit({ ...edit, education: [...edit.education, { name: '', degree: '', startDate: '', endDate: '' }] })} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Education</button>
-        <div className="flex gap-4 mt-4">
-          <button onClick={exportData} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 hover-blink">Export JSON</button>
-          <button onClick={importData} className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 hover-blink">Import JSON</button>
-          <button onClick={clearAll} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 hover-blink">Clear All</button>
         </div>
-        <hr className="my-6" />
-        <h3 className="text-lg font-semibold mb-2">Core Competencies</h3>
-        {edit.coreCompetencies.map((cat, idx) => (
-          <div key={idx} className="mb-2 flex items-center gap-2">
-            <input id={`corecomp-category-${idx}`} name={`corecomp-category-${idx}`} autoComplete="off"
-              placeholder="Category Name"
-              value={cat.category}
-              onChange={e => setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.map((c, i) => i === idx ? { ...c, category: e.target.value } : c) })}
-              className="flex-1 p-2 border rounded"
-            />
-            <input id={`corecomp-description-${idx}`} name={`corecomp-description-${idx}`} autoComplete="off"
-              placeholder="Description"
-              value={cat.description}
-              onChange={e => setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.map((c, i) => i === idx ? { ...c, description: e.target.value } : c) })}
-              className="flex-1 p-2 border rounded"
-            />
-            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => setEdit({ ...edit, coreCompetencies: edit.coreCompetencies.filter((_, i) => i !== idx) })}>Delete</button>
-          </div>
-        ))}
-        <button onClick={addCoreCompetency} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Core Competency</button>
-        <hr className="my-6" />
-        <h3 className="text-lg font-semibold mb-2">Additional Details</h3>
-        {(edit.additionalDetails || []).map((item, idx) => (
-          <div key={idx} className="mb-2 flex items-center gap-2">
-            <input id={`add-detail-category-${idx}`} name={`add-detail-category-${idx}`} autoComplete="off"
-              placeholder="Category Name"
-              value={item.category}
-              onChange={e => setEdit({ ...edit, additionalDetails: edit.additionalDetails.map((d, i) => i === idx ? { ...d, category: e.target.value } : d) })}
-              className="flex-1 p-2 border rounded"
-            />
-            <input id={`add-detail-description-${idx}`} name={`add-detail-description-${idx}`} autoComplete="off"
-              placeholder="Description"
-              value={item.description}
-              onChange={e => setEdit({ ...edit, additionalDetails: edit.additionalDetails.map((d, i) => i === idx ? { ...d, description: e.target.value } : d) })}
-              className="flex-1 p-2 border rounded"
-            />
-            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => setEdit({ ...edit, additionalDetails: edit.additionalDetails.filter((_, i) => i !== idx) })}>Delete</button>
-          </div>
-        ))}
-        <button onClick={addAdditionalDetail} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Additional Detail</button>
-        <hr className="my-6" />
-        <h3 className="text-lg font-semibold mb-2">Skills</h3>
-        {edit.skills.map((skill, idx) => (
-          <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
-            <input id={`skill-name-${idx}`} name={`skill-name-${idx}`} autoComplete="off" placeholder="Skill Name" value={skill.name} onChange={e => handleSkillChange(idx, 'name', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <input id={`skill-category-${idx}`} name={`skill-category-${idx}`} autoComplete="off" placeholder="Category" value={skill.category} onChange={e => handleSkillChange(idx, 'category', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <input id={`skill-proficiency-${idx}`} name={`skill-proficiency-${idx}`} autoComplete="off" placeholder="Proficiency" value={skill.proficiency} onChange={e => handleSkillChange(idx, 'proficiency', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => deleteSkill(idx)}>Delete</button>
-          </div>
-        ))}
-        <button onClick={addSkill} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6 hover-blink">Add Skill</button>
-        <hr className="my-6" />
-        <h3 className="text-lg font-semibold mb-2">Projects</h3>
-        {edit.projects.map((project, idx) => (
-          <div key={idx} className="mb-4 p-2 border rounded bg-gray-50">
-            <input id={`project-name-${idx}`} name={`project-name-${idx}`} autoComplete="off" placeholder="Project Name" value={project.name} onChange={e => handleProjectChange(idx, 'name', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <textarea id={`project-description-${idx}`} name={`project-description-${idx}`} autoComplete="off" placeholder="Description" value={project.description} onChange={e => handleProjectChange(idx, 'description', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <input id={`project-tech-${idx}`} name={`project-tech-${idx}`} autoComplete="off" placeholder="Technologies Used (comma separated)" value={Array.isArray(project.technologiesUsed) ? project.technologiesUsed.join(', ') : ''} onChange={e => handleProjectChange(idx, 'technologiesUsed', e.target.value.split(',').map(s => s.trim()))} className="w-full mb-2 p-2 border rounded" />
-            <input id={`project-date-${idx}`} name={`project-date-${idx}`} autoComplete="off" placeholder="Start Date" value={project.date} onChange={e => handleProjectChange(idx, 'date', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <input id={`project-endDate-${idx}`} name={`project-endDate-${idx}`} autoComplete="off" placeholder="End Date" value={project.endDate || ''} onChange={e => handleProjectChange(idx, 'endDate', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <input id={`project-website-${idx}`} name={`project-website-${idx}`} autoComplete="off" placeholder="Website" value={project.website || ''} onChange={e => handleProjectChange(idx, 'website', e.target.value)} className="w-full mb-2 p-2 border rounded" />
-            <button type="button" className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onClick={() => deleteProject(idx)}>Delete</button>
-          </div>
-        ))}
-        <button onClick={addProject} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hover-blink">Add Project</button>
-      </div>
-      {/* Display Section (Home preview) can be added here if needed */}
-        </div>
-        );
+      )}
     </div>
   );
 };
 
-export default App;
+const AppContainer: React.FC = () => {
+  return (
+    <PortfolioContext.Provider value={{ info: defaultInfo, setInfo: () => {} }}>
+      <App />
+    </PortfolioContext.Provider>
+  );
+};
+
+export default AppContainer;
