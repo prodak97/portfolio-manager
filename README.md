@@ -183,4 +183,4 @@ Potential features to add:
 - Skill proficiency tracking over time
 - Search and filter capabilities
 - Dark mode toggle
-- Data backup to cloud storage  
+- Data backup to cloud storage      

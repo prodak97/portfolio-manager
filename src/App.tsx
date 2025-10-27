@@ -1,23 +1,8 @@
-// Helper to format date as dd/mm/yy
-function formatDate(dateStr?: string) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}/${month}/${year}`;
-}
-
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import RuslanPortfolio from './RuslanPortfolio';
 import { PortfolioContext } from './PortfolioProvider';
-import { jsPDF } from 'jspdf';
 import './App.css';
 
 // Types
-type ViewMode = 'view' | 'edit';
-
 type Skill = {
   name: string;
   category: string;
@@ -325,129 +310,6 @@ const App: React.FC = () => {
     input.click();
   }
 
-  // Download CV as PDF with print-friendly styles
-  async function downloadCV() {
-    try {
-      // Build a self-contained CV node with inline styles (no Tailwind)
-      const cvNode = document.createElement('div');
-      cvNode.style.width = '800px';
-      cvNode.style.padding = '28px';
-      cvNode.style.background = '#ffffff';
-      cvNode.style.color = '#111827';
-      cvNode.style.fontFamily = "Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'";
-      cvNode.style.fontSize = '12pt';
-      cvNode.style.lineHeight = '1.4';
-      // Place inside viewport and nearly invisible to ensure browsers paint it
-      cvNode.style.position = 'fixed';
-      cvNode.style.left = '0';
-      cvNode.style.top = '0';
-      cvNode.style.opacity = '0.01';
-      cvNode.style.pointerEvents = 'none';
-      cvNode.style.zIndex = '9999';
-
-      const sectionTitle = (text: string) => `<h2 style="margin:16px 0 6px; padding-bottom:4px; border-bottom:1px solid #e5e7eb; font-size:14pt; color:#1f2937;">${text}</h2>`;
-
-      // Header (preload image to avoid taint/blank)
-      let profileImgHtml = '';
-      if (info.imageUrl) {
-        try {
-          const loadedOk = await new Promise<boolean>((resolve) => {
-            const testImg = new Image();
-            testImg.crossOrigin = 'anonymous';
-            testImg.onload = () => resolve(true);
-            testImg.onerror = () => resolve(false);
-            testImg.src = info.imageUrl;
-          });
-          if (loadedOk) {
-            profileImgHtml = `<img src="${info.imageUrl}" alt="Profile" crossOrigin="anonymous" style="width:64px; height:64px; border-radius:9999px; object-fit:cover; border:1px solid #e5e7eb;" />`;
-          }
-        } catch {}
-      }
-      const headerHtml = `
-        <div style="display:flex; gap:16px; align-items:center; margin-bottom:8px;">${profileImgHtml}
-          <div>
-            <div style="font-size:22pt; font-weight:700; margin-bottom:2px;">${info.name || ''}</div>
-            <div style="color:#374151;">${info.location || ''}</div>
-            <div style="color:#374151;">${info.email || ''}${info.linkedin ? ` • ${info.linkedin}` : ''}</div>
-          </div>
-        </div>
-        ${info.bio ? `<div style="margin:6px 0 10px; color:#374151;">${info.bio}</div>` : ''}
-      `;
-
-      // Summary
-      const summaryHtml = info.professionalSummary ? `${sectionTitle('Summary')}<div style="color:#374151;">${info.professionalSummary}</div>` : '';
-
-      // Skills (condensed)
-      const skillsByCat = info.skills.reduce((acc, s) => {
-        if (!acc[s.category]) acc[s.category] = [] as string[];
-        acc[s.category].push(`${s.name}${s.proficiency ? ` (${s.proficiency})` : ''}`);
-        return acc;
-      }, {} as Record<string, string[]>);
-      const skillsHtml = Object.keys(skillsByCat).length
-        ? `${sectionTitle('Skills')}
-          <div>
-            ${Object.entries(skillsByCat).map(([cat, arr]) => `<div style="margin:2px 0;"><span style="font-weight:600; color:#1f2937;">${cat}:</span> <span style="color:#374151;">${arr.join(', ')}</span></div>`).join('')}
-          </div>`
-        : '';
-
-      // Education
-      const educationHtml = (info.education && info.education.length)
-        ? `${sectionTitle('Education')}
-            <ul style="margin:6px 0 0 16px;">
-              ${info.education.map(e => `<li style="margin:2px 0; color:#374151;"><span style="font-weight:600; color:#111827;">${e.name}</span> — ${e.degree} (${formatDate(e.startDate)} - ${e.endDate ? formatDate(e.endDate) : 'Present'})</li>`).join('')}
-            </ul>`
-        : '';
-
-      // Projects (limit to 6 to keep concise)
-      const projectsHtml = (info.projects && info.projects.length)
-        ? `${sectionTitle('Projects')}
-            <ul style="margin:6px 0 0 16px;">
-              ${info.projects.slice(0, 6).map(p => `<li style="margin:4px 0; color:#374151;"><span style="font-weight:600; color:#111827;">${p.name}</span> (${formatDate(p.date)}${p.endDate ? ` - ${formatDate(p.endDate)}` : ' - Present'}) — ${p.description}${p.technologiesUsed?.length ? `<div style=\"font-size:10pt; color:#6b7280;\">Tech: ${p.technologiesUsed.join(', ')}</div>` : ''}</li>`).join('')}
-            </ul>`
-        : '';
-
-      // Additional Details
-      const addDetailsHtml = (info.additionalDetails && info.additionalDetails.length)
-        ? `${sectionTitle('Additional Details')}
-            <ul style="margin:6px 0 0 16px;">
-              ${info.additionalDetails.map(d => `<li style="margin:2px 0; color:#374151;"><span style="font-weight:600; color:#111827;">${d.category}</span>: ${d.description}</li>`).join('')}
-            </ul>`
-        : '';
-
-      cvNode.innerHTML = headerHtml + summaryHtml + skillsHtml + educationHtml + projectsHtml + addDetailsHtml;
-      document.body.appendChild(cvNode);
-      // Ensure layout is flushed before capture
-      await new Promise(requestAnimationFrame);
-      await (document as any).fonts?.ready?.catch?.(() => {});
-
-      // Use jsPDF's HTML renderer directly to avoid canvas/base64 issues
-      const pdf = new jsPDF('p', 'pt', 'a4');
-      await new Promise<void>((resolve) => {
-        (pdf as any).html(cvNode, {
-          x: 0,
-          y: 0,
-          html2canvas: {
-            scale: Math.min(2, window.devicePixelRatio || 1.5),
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: '#ffffff',
-            logging: false,
-            foreignObjectRendering: false,
-            windowWidth: 800,
-            scrollX: 0,
-            scrollY: 0,
-          },
-          callback: () => resolve(),
-        });
-      });
-      pdf.save(`${info.name || 'cv'}.pdf`);
-    } catch (e) {
-      setError('Failed to generate PDF.');
-      // eslint-disable-next-line no-console
-      console.error('PDF generation error', e);
-  }
-
-  // Clear all data
   // Clear all data
   function clearAll() {
     if (window.confirm('Are you sure you want to clear all data?')) {
@@ -457,23 +319,21 @@ const App: React.FC = () => {
     }
   }
 
-  const [viewMode, setViewMode] = useState<ViewMode>('edit');
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <button
-        onClick={() => setViewMode(viewMode === 'view' ? 'edit' : 'view')}
-        className="mode-toggle"
-      >
-        {viewMode === 'view' ? 'Edit Portfolio' : 'View Portfolio'}
-      </button>
+      <nav className="bg-white shadow-md py-4 px-8 mb-6">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">Portfolio Editor</h1>
+          <div className="flex gap-4">
+            <a href="/" className="text-blue-600 hover:text-blue-800 font-medium">View Portfolio</a>
+            <a href="/cv" className="text-blue-600 hover:text-blue-800 font-medium">View CV</a>
+          </div>
+        </div>
+      </nav>
 
-      {viewMode === 'view' ? (
-        <RuslanPortfolio />
-      ) : (
-        <div className="flex flex-col md:flex-row gap-10 p-4 md:p-8 max-w-5xl mx-auto bg-white rounded-xl shadow-lg mt-6">
-          {/* Editing Section */}
-          <div className="flex-1 border-b md:border-b-0 md:border-r border-gray-200 pb-6 md:pr-8">
+      <div className="flex flex-col md:flex-row gap-10 p-4 md:p-8 max-w-5xl mx-auto bg-white rounded-xl shadow-lg">
+        {/* Editing Section */}
+        <div className="flex-1 border-b md:border-b-0 md:border-r border-gray-200 pb-6 md:pr-8">
             <h2 className="text-xl font-semibold mb-4">Edit Portfolio</h2>
             <div className="mb-2 text-sm text-gray-500">
               {saving ? 'Saving...' : saveMsg ? saveMsg : null}
@@ -598,8 +458,7 @@ const App: React.FC = () => {
         <button onClick={addProject} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hover-blink">Add Project</button>
       </div>
       {/* Display Section (Home preview) can be added here if needed */}
-        </div>
-        );
+    </div>
     </div>
   );
 };

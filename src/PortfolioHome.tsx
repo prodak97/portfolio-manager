@@ -1,9 +1,22 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { PortfolioContext } from './PortfolioProvider';
+import { downloadCVAsPDF } from './utils/downloadCV';
 import './styles/main.css'; // Ensure you have Tailwind CSS set up
 
 export default function PortfolioHome() {
   const { info } = useContext(PortfolioContext);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadCV = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadCVAsPDF(info);
+    } catch (error) {
+      alert('Failed to download CV. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Fixed Tab Navigation */}
@@ -13,7 +26,16 @@ export default function PortfolioHome() {
           <a href="#home" className="base-link font-medium">Home</a>
           <a href="#contact" className="base-link font-medium">Contact</a>
           <a href="#works" className="base-link font-medium">Works</a>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium text-xs" style={{marginTop:'2px',marginLeft:'8px',marginBottom:'2px',padding:'6px 14px',lineHeight:'1.1'}} title="Download CV">Download CV</button>
+          <a href="/cv" className="base-link font-medium">View CV</a>
+          <button
+            onClick={handleDownloadCV}
+            disabled={isDownloading}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium text-xs disabled:opacity-50"
+            style={{marginTop:'2px',marginLeft:'8px',marginBottom:'2px',padding:'6px 14px',lineHeight:'1.1'}}
+            title="Download CV"
+          >
+            {isDownloading ? 'Generating...' : 'Download CV'}
+          </button>
         </div>
   <a href="/edit" className="fixed right-8 bottom-8 bg-green-600 text-white px-4 py-2 rounded shadow-lg hover:bg-green-700 base-link" style={{zIndex:1000}}>Edit Portfolio</a>
       </nav>

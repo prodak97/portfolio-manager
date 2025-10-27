@@ -1,7 +1,9 @@
-import React from 'react';
+import { useContext, useState } from 'react';
 import { FaNodeJs, FaReact, FaDocker, FaAws, FaAngular } from 'react-icons/fa';
-import { SiMongodb,SiJavascript,SiNestjs,SiPostgresql,} from 'react-icons/si';
-
+import { SiMongodb,SiJavascript,SiNestjs,SiPostgresql,SiNextdotjs} from 'react-icons/si';
+import { LiaCubesSolid, LiaInfinitySolid} from 'react-icons/lia';
+import { PortfolioContext } from './PortfolioProvider';
+import { downloadCVAsPDF } from './utils/downloadCV';
 const TechnologyIcon = ({ name }: { name: string }) => {
   const iconProps = { className: "inline-block w-6 h-6 mr-2", title: name };
   switch (name.toLowerCase()) {
@@ -14,11 +16,28 @@ const TechnologyIcon = ({ name }: { name: string }) => {
     case 'angular': return <FaAngular {...iconProps} />;
     case 'nestjs': return <SiNestjs {...iconProps} />;
     case 'postgresql': return <SiPostgresql {...iconProps} />;
+    case 'ci/cd' : return <LiaInfinitySolid {...iconProps} />;
+    case 'microservices' : return <LiaCubesSolid {...iconProps} />;
+    case 'next.js' : return <SiNextdotjs {...iconProps} />;
     default: return null;
   }
 };
 
 const RuslanPortfolio = () => {
+  const { info } = useContext(PortfolioContext);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownloadCV = async () => {
+    setIsDownloading(true);
+    try {
+      await downloadCVAsPDF(info);
+    } catch (error) {
+      alert('Failed to download CV. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header/Nav */}
@@ -29,7 +48,15 @@ const RuslanPortfolio = () => {
           <a href="#projects" className="base-link font-medium">Projects</a>
           <a href="#skills" className="base-link font-medium">Skills</a>
           <a href="#contact" className="base-link font-medium">Contact</a>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium">Download CV</button>
+          <a href="/cv" className="base-link font-medium">View CV</a>
+          <button
+            onClick={handleDownloadCV}
+            disabled={isDownloading}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium disabled:opacity-50"
+            style={{textDecoration: 'none'}}
+          >
+            {isDownloading ? 'Generating...' : 'Download CV'}
+          </button>
         </div>
       </nav>
 
