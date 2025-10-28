@@ -1,13 +1,13 @@
 import React, { createContext, useState } from 'react';
 import { PortfolioInfo,} from './App';
 
-const defaultInfo: PortfolioInfo = {
+export const defaultInfo: PortfolioInfo = {
   name: 'Jane doe',
   bio: 'Web Developer | Designer | Programmer',
   professionalSummary: 'Experienced full-stack developer with a passion for building scalable web applications and leading engineering teams.',
   email: 'jane.doe@email.com',
   linkedin: 'linkedin.com/in/janedoe',
-  resumeUrl: 'https://example.com/jane-doe-resume.pdf',
+  //resumeUrl: 'https://example.com/jane-doe-resume.pdf',
   location: 'San Francisco, CA',
   imageUrl: '/img/download (2).png',
   languages: ['English', 'Spanish'],
@@ -32,6 +32,7 @@ const defaultInfo: PortfolioInfo = {
   ],
   additionalDetails: [],
 };
+
 
 export const PortfolioContext = createContext({
   info: defaultInfo,

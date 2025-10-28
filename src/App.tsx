@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
-import RuslanPortfolio from './RuslanPortfolio';
-import { PortfolioContext } from './PortfolioProvider';
-import { jsPDF } from 'jspdf';
+//import RuslanPortfolio from './RuslanPortfolio';
+import { PortfolioContext, defaultInfo } from './PortfolioProvider';
+//import { jsPDF } from 'jspdf';
 import './App.css';
 
 // Helper to format date as dd/mm/yy
-function formatDate(dateStr?: string) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}/${month}/${year}`;
-}
+// function formatDate(dateStr?: string) {
+//   if (!dateStr) return '';
+//   const d = new Date(dateStr);
+//   if (isNaN(d.getTime())) return dateStr;
+//   const day = String(d.getDate()).padStart(2, '0');
+//   const month = String(d.getMonth() + 1).padStart(2, '0');
+//   const year = String(d.getFullYear()).slice(-2);
+//   return `${day}/${month}/${year}`;
+// }
 
 // Types
 type Skill = {
@@ -54,7 +54,7 @@ export type PortfolioInfo = {
   professionalSummary: string;
   email: string;
   linkedin: string;
-  resumeUrl: string;
+  //resumeUrl: string;
   location: string;
   imageUrl: string;
   languages: string[];
@@ -65,38 +65,6 @@ export type PortfolioInfo = {
   additionalDetails: AdditionalDetail[];
 };
 // Default Data
-const defaultInfo: PortfolioInfo = {
-  name: 'Hui Sobachiy',
-  bio: 'Web Developer | Designer | Programmer',
-  professionalSummary: 'Experienced full-stack developer with a passion for building scalable web applications and leading engineering teams.',
-  email: 'jane.doe@email.com',
-  linkedin: 'linkedin.com/in/janedoe',
-  resumeUrl: 'https://example.com/jane-doe-resume.pdf',
-  location: 'San Francisco, CA',
-  imageUrl: '/img/download (2).png',
-  languages: ['English', 'Spanish'],
-  education: [
-    { name: 'Stanford University', degree: 'B.Sc. in Computer Science', startDate: '2015-09-01', endDate: '2019-06-01' },
-    { name: 'MIT', degree: 'M.Sc. in Software Engineering', startDate: '2019-09-01', endDate: '2021-06-01' },
-  ],
-  skills: [
-    { name: 'React', category: 'Frontend', proficiency: 'Advanced' },
-    { name: 'TypeScript', category: 'Frontend', proficiency: 'Intermediate' },
-    { name: 'Node.js', category: 'Backend', proficiency: 'Intermediate' },
-    { name: 'CSS', category: 'Frontend', proficiency: 'Advanced' },
-  ],
-  projects: [
-    { name: 'Project One', description: 'Description of project one.', technologiesUsed: ['React', 'CSS'], date: '2024-01-01', endDate: '2024-03-01' },
-    { name: 'Project Two', description: 'Description of project two.', technologiesUsed: ['TypeScript', 'Node.js'], date: '2024-02-01', endDate: '2024-04-01' },
-  ],
-  coreCompetencies: [
-    { category: 'Frontend', description: 'Frontend development skills' },
-    { category: 'Backend', description: 'Backend development skills' },
-    { category: 'Tools', description: 'Development tools and utilities' },
-  ],
-  additionalDetails: [],
-};
-
 // LocalStorage keys
 const STORAGE_KEY = 'portfolio-data';
 const BACKUP_KEY = 'portfolio-backups';
@@ -169,7 +137,7 @@ function saveToLocalStorage(data: PortfolioInfo): { success: boolean; error?: st
 const App: React.FC = () => {
   // Ensure the component returns JSX
   const { info, setInfo } = useContext(PortfolioContext);
-  const [viewMode, setViewMode] = useState<ViewMode>('edit');
+  //const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [edit, setEdit] = useState<PortfolioInfo>(info);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
@@ -373,10 +341,10 @@ const App: React.FC = () => {
               LinkedIn:
               <input id="linkedin" name="linkedin" autoComplete="url" value={edit.linkedin} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
             </label>
-            <label className="block mb-2 font-medium">
+            {/* <label className="block mb-2 font-medium">
               Resume URL:
               <input id="resumeUrl" name="resumeUrl" autoComplete="url" value={edit.resumeUrl || ''} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
-            </label>
+            </label> */}
             <label className="block mb-2 font-medium">
               Location:
               <input id="location" name="location" autoComplete="address-level2" value={edit.location} onChange={handleChange} className="w-full mt-1 mb-3 p-2 border rounded bg-gray-50" />
@@ -472,7 +440,6 @@ const App: React.FC = () => {
             <button onClick={addProject} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 hover-blink">Add Project</button>
           </div>
         </div>
-      )}
     </div>
   );
 };

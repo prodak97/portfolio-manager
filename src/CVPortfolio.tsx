@@ -254,7 +254,7 @@ export default function CVPortfolio() {
           </section>
         )}
 
-        {/* Resume Link */}
+        {/* Resume Link
         {info.resumeUrl && (
           <section className="cv-section">
             <a
@@ -266,12 +266,12 @@ export default function CVPortfolio() {
               View Full Resume PDF
             </a>
           </section>
-        )}
+        )}*/}
 
         {/* Navigation Footer */}
         <div className="cv-nav-footer">
           <a href="/" className="cv-nav-button">Back to Portfolio</a>
-          <a href="/edit" className="cv-nav-button">Edit Portfolio</a>
+          <a href="/edit" className="cv-nav-button">Edit CV</a>
           <button
             onClick={downloadCV}
             className="cv-nav-button cv-print-button"
