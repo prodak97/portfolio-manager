@@ -2,7 +2,7 @@ import React, { createContext, useState } from 'react';
 import { PortfolioInfo,} from './App';
 
 const defaultInfo: PortfolioInfo = {
-  name: 'Hui Sobachiy',
+  name: 'Jane doe',
   bio: 'Web Developer | Designer | Programmer',
   professionalSummary: 'Experienced full-stack developer with a passion for building scalable web applications and leading engineering teams.',
   email: 'jane.doe@email.com',

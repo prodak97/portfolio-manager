@@ -1,9 +1,9 @@
 /* Reset and base styles */
-* {
+/** {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
+}*/
 
 /* Scrollbar handling for layout stability */
 html {
