@@ -1,6 +1,8 @@
 import { useContext, useState } from 'react';
-import { FaNodeJs, FaReact, FaDocker, FaAws, FaAngular } from 'react-icons/fa';
-import { SiMongodb,SiJavascript,SiNestjs,SiPostgresql,SiNextdotjs} from 'react-icons/si';
+import { FaNodeJs, FaReact, FaDocker, FaAws, FaAngular, FaPhp, FaLaravel, FaGitlab, FaJenkins} from 'react-icons/fa';
+import { SiMongodb, SiJavascript, SiNestjs, SiPostgresql, SiNextdotjs, SiTypescript, SiCss3, SiHtml5, SiMysql, SiRedis, SiKubernetes, SiGraphql, SiJest, SiMocha, SiCypress, SiJasmine, SiReactivex, SiBackbonedotjs,} from 'react-icons/si';
+import { DiScrum } from 'react-icons/di';
+import { GiKnockout } from 'react-icons/gi';
 import { LiaCubesSolid, LiaInfinitySolid} from 'react-icons/lia';
 import { PortfolioContext } from './PortfolioProvider';
 import { downloadCVAsPDF } from './utils/downloadCV';
@@ -65,6 +67,27 @@ const TechnologyIcon = ({ name }: { name: string }) => {
     case 'ci/cd' : return <LiaInfinitySolid {...iconProps} />;
     case 'microservices' : return <LiaCubesSolid {...iconProps} />;
     case 'next.js' : return <SiNextdotjs {...iconProps} />;
+    case 'typescript' : return <SiTypescript {...iconProps} />;
+    case 'css' : return <SiCss3 {...iconProps} />;
+    case 'nest.js' : return <SiNestjs {...iconProps} />;
+    case 'php' : return <FaPhp {...iconProps} />;
+    case 'laravel' : return <FaLaravel {...iconProps} />;
+    case 'mysql' : return <SiMysql {...iconProps} />;
+    case 'redis' : return <SiRedis {...iconProps} />;
+    case 'gitlab ci/cd' : return <FaGitlab {...iconProps} />;
+    case 'kubernetes' : return <SiKubernetes {...iconProps} />;
+    case 'graphql' : return <SiGraphql {...iconProps} />;
+    case 'jest' : return <SiJest {...iconProps} />;
+    case 'mocha' : return <SiMocha {...iconProps} />;
+    case 'cypress' : return <SiCypress {...iconProps} />;
+    case 'jasmine' : return <SiJasmine {...iconProps} />;
+    case 'scrum' : return <DiScrum {...iconProps} />;
+    case 'html5' : return <SiHtml5 {...iconProps} />;
+    case 'rx.js' : return <SiReactivex {...iconProps} />;
+    case 'knockout.js' : return <GiKnockout {...iconProps} />;
+    case 'backbone' : return <SiBackbonedotjs {...iconProps} />;
+    case 'jenkins ci/cd' : return <FaJenkins {...iconProps} />;
+
     default: return null;
   }
 };
@@ -126,8 +149,37 @@ const RuslanPortfolio = () => {
                 </div>
               </div>
            </div>
-          </section>
-
+          </section>        
+        {/* Core Competencies */}
+        <section id="Core Competencies" className="mb-20 py-8">
+          <h2 className="text-3xl font-semibold mb-10">Core Competencies</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
+              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Leadership</h3>
+              <p className="text-gray-700 text-base">Technical team leadership, strategic planning, and project management</p>
+            </div>
+            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
+              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Architecture</h3>
+              <p className="text-gray-700 text-base">Microservices architecture design and implementation</p>
+            </div>
+            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
+              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Backend</h3>
+              <p className="text-gray-700 text-base">Node.js, Express, MongoDB, RESTful APIs</p>
+            </div>
+            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
+              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Frontend</h3>
+              <p className="text-gray-700 text-base">React, TypeScript, Modern JavaScript</p>
+            </div>
+            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
+              <h3 className="font-semibold text-blue-600 mb-4 text-xl">DevOps</h3>
+              <p className="text-gray-700 text-base">Docker, AWS, CI/CD, Server Management</p>
+            </div>
+            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
+              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Security</h3>
+              <p className="text-gray-700 text-base">Application security, encryption, authentication</p>
+            </div>
+          </div>
+        </section>
         {/* Projects Section */}
         <section id="projects" className="mb-20 py-8">
           <h2 className="text-3xl font-semibold mb-10">Featured Projects</h2>
@@ -150,7 +202,7 @@ const RuslanPortfolio = () => {
                   <li>Maintained server stability, security and scalability to ensure uninterrupted operations.</li>
                   <li>Developed new features, optimized performance and resolved technical challenges to drive innovation and efficiency.</li>
                 </ul>
-                <div className="flex flex-wrap gap-3 mb-4">
+                <div className="flex flex-wrap rgap-3 mb-4">
                   {['Node.js', 'React', 'Microservices', 'Docker', 'AWS', 'MongoDB'].map((tech) => (
                     <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
                       <TechnologyIcon name={tech} />
@@ -227,40 +279,194 @@ const RuslanPortfolio = () => {
                 </svg>
               </a>
             </div>
+            <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-all duration-300">
+              <div className="flex justify-between items-start mb-6">
+                <h3 className="font-bold text-2xl">Accenture</h3>
+                <span className="text-gray-600 text-sm">December 2019 - December 2022</span>
+              </div>
+              <div className="text-blue-600 font-medium mb-4 text-lg">Team lead developer • Riga, Latvia</div>
+              <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
+                <li>Managed a 7-person cross-functional development team, improving code quality by 40% and reducing release cycles by 20% through targeted couching and agile</li>
+                <li>Directed development of high-impact frontend solutions that supported up to 100k concurrent users.</li>
+                <li>Implemented TDD practices to boost unit test coverage from 30% to 85% singnificantly enhancing system realiability</li>
+              </ul>
+              <div className="flex flex-wrap gap-3 mb-4">
+                {['Javascript', 'Node.js', 'Rx.js', 'AWS', 'Angular', 'Docker', 'Gitlab CI/CD', 'React'].map((tech) => (
+                  <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                    <TechnologyIcon name={tech} />
+                    {tech}
+                  </div>
+                ))}
+              </div>
+              <a href="https://www.accenture.com/us-en" target="_blank" rel="noopener noreferrer" 
+                className="inline-flex items-center text-blue-600 hover:text-blue-800">
+                <span>Visit Website</span>
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-all duration-300">
+              <div className="flex justify-between items-start mb-6">
+                <h3 className="font-bold text-2xl">C.T.Co</h3>
+                <span className="text-gray-600 text-sm">January 2018 - December 2019</span>
+              </div>
+              <div className="text-blue-600 font-medium mb-4 text-lg">Software developer(front-end) • Riga, Latvia</div>
+              <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
+                <li>Accelerated the development cycle by finalizing a front-end feature rollout under tight deadlines, reducing time-to-market by 15%</li>
+                <li>Resolved critical UI bags and optimized the codebase, decreasing error rates by 30% and enhancing system stability</li>
+                <li>Coordinated with back-end developers and QA teams to ensure seamless feature integration and consistent user experiences</li>
+              </ul>
+              <div className="flex flex-wrap gap-3 mb-4">
+                {['Javascript', 'Rx.js', 'Angular'].map((tech) => (
+                  <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                    <TechnologyIcon name={tech} />
+                    {tech}
+                  </div>
+                ))}
+              </div>
+              <a href="https://www.ctco.eu/" target="_blank" rel="noopener noreferrer" 
+                className="inline-flex items-center text-blue-600 hover:text-blue-800">
+                <span>Visit Website</span>
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-all duration-300">
+              <div className="flex justify-between items-start mb-6">
+                <h3 className="font-bold text-2xl">Accenture</h3>
+                <span className="text-gray-600 text-sm">December 2015 - December 2018</span>
+              </div>
+              <div className="text-blue-600 font-medium mb-4 text-lg">Senior developer • Riga, Latvia</div>
+              <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
+                <li>Utilized Accenture Delivery Methods for high-performance development cycles</li>
+                <li>Leveraged agile principles(TDD, CI/CD) in large-scale banking and IoT solutions</li>
+                <li>Led a frontend team of six developers with a focus on robust unit testing and continuous integration for stable, predictable releases</li>
+              </ul>
+              <div className="flex flex-wrap gap-3 mb-4">
+                {['Javascript', 'Backbone', 'Knockout.js', 'Jasmine', 'Karma', 'Angular', 'React', 'Jenkins CI/CD'].map((tech) => (
+                  <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                    <TechnologyIcon name={tech} />
+                    {tech}
+                  </div>
+                ))}
+              </div>
+              <a href="https://accenture.com" target="_blank" rel="noopener noreferrer" 
+                className="inline-flex items-center text-blue-600 hover:text-blue-800">
+                <span>Visit Website</span>
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-8 hover:shadow-xl transition-all duration-300">
+              <div className="flex justify-between items-start mb-6">
+                <h3 className="font-bold text-2xl">Nar</h3>
+                <span className="text-gray-600 text-sm">March 2015 - March 2015</span>
+              </div>
+              <div className="text-blue-600 font-medium mb-4 text-lg">Web developer • Baku, Azerbaijan</div>
+              <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
+                <li>Developed internal FAQ and reporting solutions for high-volume customer support, lowering average agent response times by 25%</li>
+                <li>Built modern, modular web applications using Backbone.js and Laravel, improving developer efficiency by 53% by creating clients account interaction section.</li>
+                <li>Provided through documentation and stable architecture, resulting in 32% fewere maintenance issues post-launch</li>
+              </ul>
+              <div className="flex flex-wrap gap-3 mb-4">
+                {['Javascript', 'HTML5', 'CSS', 'Backbone'].map((tech) => (
+                  <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                    <TechnologyIcon name={tech} />
+                    {tech}
+                  </div>
+                ))}
+              </div>
+              <a href="https://nar.com" target="_blank" rel="noopener noreferrer" 
+                className="inline-flex items-center text-blue-600 hover:text-blue-800">
+                <span>Visit Website</span>
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
           </div>
         </section>
-
-        {/* Core Competencies */}
-        <section id="Core Competencies" className="mb-20 py-8">
-          <h2 className="text-3xl font-semibold mb-10">Core Competencies</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
-              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Leadership</h3>
-              <p className="text-gray-700 text-base">Technical team leadership, strategic planning, and project management</p>
+        {/*Skills Section*/}
+        <section id="skills" className="mb-10 py-8 flex flex-row flex-wrap">
+          <h2 className="text-3xl font-semibold mb-10">Technical skills</h2>
+          <div className='flex flex-row my-5'>
+            <div className="columns-3 gap-3">
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
+                <h3 className="font-bold text-1xl mb-5 px-3 ">Front-end</h3>
+                <div className="flex flex-wrap gap-3 mb-4">
+                  {['Next.js', 'React', 'Typescript', 'CSS', 'Angular', 'HTML5'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
+                <h3 className="font-bold text-1xl mb-5 px-3">Back-end</h3>
+                <div className="flex flex-wrap gap-3 mb-4">
+                  {['Node.js', 'Nest.js', 'PHP', 'Laravel', 'Angular',].map((tech) => (
+                    <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
+                <h3 className="font-bold text-1xl mb-5 px-3">Databases</h3>
+                <div className="flex flex-wrap gap-3 mb-4">
+                  {['PostgreSQL', 'MySQL', 'MongoDB', 'Redis'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
-              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Architecture</h3>
-              <p className="text-gray-700 text-base">Microservices architecture design and implementation</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
-              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Backend</h3>
-              <p className="text-gray-700 text-base">Node.js, Express, MongoDB, RESTful APIs</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
-              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Frontend</h3>
-              <p className="text-gray-700 text-base">React, TypeScript, Modern JavaScript</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
-              <h3 className="font-semibold text-blue-600 mb-4 text-xl">DevOps</h3>
-              <p className="text-gray-700 text-base">Docker, AWS, CI/CD, Server Management</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
-              <h3 className="font-semibold text-blue-600 mb-4 text-xl">Security</h3>
-              <p className="text-gray-700 text-base">Application security, encryption, authentication</p>
+          </div>
+          <div className='flex flex-row my-5'>
+            <div className="columns-3 gap-3">
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
+                  <h3 className="font-bold text-1xl mb-5 px-3">Cloud and DevOps</h3>
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    {['Docker', 'Gitlab CI/CD', 'AWS', 'Kubernetes', 'GraphQL', 'event-driven systems'].map((tech) => (
+                      <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                        <TechnologyIcon name={tech} />
+                        {tech}
+                      </div>
+                    ))}
+                  </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
+                  <h3 className="font-bold text-1xl mb-5 px-3">API & Architecture</h3>
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    {['RESTful APIs', 'Microservices'].map((tech) => (
+                      <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                        <TechnologyIcon name={tech} />
+                        {tech}
+                      </div>
+                    ))}
+                  </div>
+              </div>
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
+                <h3 className="font-bold text-1xl mb-5 px-3">Other</h3>
+                <div className="flex flex-wrap gap-3 mb-4">
+                  {['Jest', 'Mocha', 'Cypress', 'Jasmine', 'TDD/BDD', 'Agile', 'Scrum'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
-
         {/* Contact Section */}
         <section id="contact" className="mb-20 py-8">
           <h2 className="text-3xl font-semibold mb-10">Contact</h2>

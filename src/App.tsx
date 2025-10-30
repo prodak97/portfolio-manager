@@ -144,6 +144,11 @@ const App: React.FC = () => {
   const [error, setError] = useState('');
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Sync edit state with context info when it changes
+  useEffect(() => {
+    setEdit(info);
+  }, [info]);
+
   // Debounced auto-save
   useEffect(() => {
     setSaving(true);
@@ -444,12 +449,4 @@ const App: React.FC = () => {
   );
 };
 
-const AppContainer: React.FC = () => {
-  return (
-    <PortfolioContext.Provider value={{ info: defaultInfo, setInfo: () => {} }}>
-      <App />
-    </PortfolioContext.Provider>
-  );
-};
-
-export default AppContainer;
+export default App;
