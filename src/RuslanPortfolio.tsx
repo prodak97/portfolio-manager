@@ -258,6 +258,13 @@ const RuslanPortfolio = () => {
                 <span className="text-gray-600 text-sm">November 2020 - March 2023</span>
               </div>
               <div className="text-blue-600 font-medium mb-4 text-lg">Software Architect and Developer  • Riga, Latvia</div>
+              <div className="mb-8">
+                <WebsitePreview
+                  name="refoks.com"
+                  description="A Development and design providing company"
+                  imageUrl="src/img/refoks.png"
+                />
+              </div>
               <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
                 <li>Led the recruitment and mentoring of technical staff, building a high-performing team that launched four gaming brands with 100k deposits per month.</li>
                 <li>Designed scalable, data-intensive architectures to ensure robust performance and high client satisfaction.</li>
@@ -285,6 +292,13 @@ const RuslanPortfolio = () => {
                 <span className="text-gray-600 text-sm">December 2019 - December 2022</span>
               </div>
               <div className="text-blue-600 font-medium mb-4 text-lg">Team lead developer • Riga, Latvia</div>
+              <div className="mb-8">
+                <WebsitePreview
+                  name="accenture.com"
+                  description="A company that helps your business grow faster, better, stronger"
+                  imageUrl="src/img/Accenture.png"
+                />
+              </div>
               <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
                 <li>Managed a 7-person cross-functional development team, improving code quality by 40% and reducing release cycles by 20% through targeted couching and agile</li>
                 <li>Directed development of high-impact frontend solutions that supported up to 100k concurrent users.</li>
@@ -312,6 +326,13 @@ const RuslanPortfolio = () => {
                 <span className="text-gray-600 text-sm">January 2018 - December 2019</span>
               </div>
               <div className="text-blue-600 font-medium mb-4 text-lg">Software developer(front-end) • Riga, Latvia</div>
+              <div className='mb-8'>
+                <WebsitePreview
+                  name="ctco.eu"
+                  description="Desinging and providing optimized solutions for business needs and harnesses the power of data"
+                  imageUrl="src/img/ctco.png"
+                />
+              </div>
               <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
                 <li>Accelerated the development cycle by finalizing a front-end feature rollout under tight deadlines, reducing time-to-market by 15%</li>
                 <li>Resolved critical UI bags and optimized the codebase, decreasing error rates by 30% and enhancing system stability</li>
@@ -366,6 +387,13 @@ const RuslanPortfolio = () => {
                 <span className="text-gray-600 text-sm">March 2015 - March 2015</span>
               </div>
               <div className="text-blue-600 font-medium mb-4 text-lg">Web developer • Baku, Azerbaijan</div>
+              <div className="mb-8">
+                <WebsitePreview
+                  name="nar.az"
+                  description="Telecommunication company"
+                  imageUrl="src/img/Nar.png"
+                />
+              </div>
               <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-2">
                 <li>Developed internal FAQ and reporting solutions for high-volume customer support, lowering average agent response times by 25%</li>
                 <li>Built modern, modular web applications using Backbone.js and Laravel, improving developer efficiency by 53% by creating clients account interaction section.</li>
@@ -379,7 +407,7 @@ const RuslanPortfolio = () => {
                   </div>
                 ))}
               </div>
-              <a href="https://nar.com" target="_blank" rel="noopener noreferrer" 
+              <a href="https://nar.az" target="_blank" rel="noopener noreferrer" 
                 className="inline-flex items-center text-blue-600 hover:text-blue-800">
                 <span>Visit Website</span>
                 <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
