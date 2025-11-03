@@ -1,9 +1,10 @@
 import { useContext, useState } from 'react';
-import { FaNodeJs, FaReact, FaDocker, FaAws, FaAngular, FaPhp, FaLaravel, FaGitlab, FaJenkins} from 'react-icons/fa';
-import { SiMongodb, SiJavascript, SiNestjs, SiPostgresql, SiNextdotjs, SiTypescript, SiCss3, SiHtml5, SiMysql, SiRedis, SiKubernetes, SiGraphql, SiJest, SiMocha, SiCypress, SiJasmine, SiReactivex, SiBackbonedotjs,} from 'react-icons/si';
+import { FaNodeJs, FaReact, FaDocker, FaAws, FaAngular, FaPhp, FaLaravel, FaGitlab, FaJenkins, FaPython} from 'react-icons/fa';
+import { SiMongodb, SiJavascript, SiNestjs, SiPostgresql, SiNextdotjs, SiTypescript, SiCss3, SiHtml5, SiMysql, SiRedis, SiKubernetes, SiGraphql, SiJest, SiMocha, SiCypress, SiJasmine, SiReactivex, SiBackbonedotjs, SiOpenai} from 'react-icons/si';
 import { DiScrum } from 'react-icons/di';
-import { GiKnockout } from 'react-icons/gi';
+import { GiKnockout, GiArtificialIntelligence } from 'react-icons/gi';
 import { LiaCubesSolid, LiaInfinitySolid} from 'react-icons/lia';
+import { BsLightningChargeFill } from 'react-icons/bs';
 import { PortfolioContext } from './PortfolioProvider';
 import { downloadCVAsPDF } from './utils/downloadCV';
 //import {im}
@@ -54,42 +55,53 @@ const WebsitePreview: React.FC<WebsitePreviewProps> = ({ name, description, imag
 };
 const TechnologyIcon = ({ name }: { name: string }) => {
   const iconProps = { className: "inline-block w-6 h-6 mr-2 ml-1 my-2", title: name };
-  switch (name.toLowerCase()) {
-    case 'node.js': return <FaNodeJs {...iconProps} />;
-    case 'react': return <FaReact {...iconProps} />;
-    case 'docker': return <FaDocker {...iconProps} />;
-    case 'aws': return <FaAws {...iconProps} />;
-    case 'mongodb': return <SiMongodb {...iconProps} />;
-    case 'javascript': return <SiJavascript {...iconProps} />;
-    case 'angular': return <FaAngular {...iconProps} />;
-    case 'nestjs': return <SiNestjs {...iconProps} />;
-    case 'postgresql': return <SiPostgresql {...iconProps} />;
-    case 'ci/cd' : return <LiaInfinitySolid {...iconProps} />;
-    case 'microservices' : return <LiaCubesSolid {...iconProps} />;
-    case 'next.js' : return <SiNextdotjs {...iconProps} />;
-    case 'typescript' : return <SiTypescript {...iconProps} />;
-    case 'css' : return <SiCss3 {...iconProps} />;
-    case 'nest.js' : return <SiNestjs {...iconProps} />;
-    case 'php' : return <FaPhp {...iconProps} />;
-    case 'laravel' : return <FaLaravel {...iconProps} />;
-    case 'mysql' : return <SiMysql {...iconProps} />;
-    case 'redis' : return <SiRedis {...iconProps} />;
-    case 'gitlab ci/cd' : return <FaGitlab {...iconProps} />;
-    case 'kubernetes' : return <SiKubernetes {...iconProps} />;
-    case 'graphql' : return <SiGraphql {...iconProps} />;
-    case 'jest' : return <SiJest {...iconProps} />;
-    case 'mocha' : return <SiMocha {...iconProps} />;
-    case 'cypress' : return <SiCypress {...iconProps} />;
-    case 'jasmine' : return <SiJasmine {...iconProps} />;
-    case 'scrum' : return <DiScrum {...iconProps} />;
-    case 'html5' : return <SiHtml5 {...iconProps} />;
-    case 'rx.js' : return <SiReactivex {...iconProps} />;
-    case 'knockout.js' : return <GiKnockout {...iconProps} />;
-    case 'backbone' : return <SiBackbonedotjs {...iconProps} />;
-    case 'jenkins ci/cd' : return <FaJenkins {...iconProps} />;
+  const lowerName = name.toLowerCase();
 
-    default: return null;
-  }
+  // Technology to icon mapping
+  const iconMap: { [key: string]: JSX.Element } = {
+    'node.js': <FaNodeJs {...iconProps} />,
+    'react': <FaReact {...iconProps} />,
+    'docker': <FaDocker {...iconProps} />,
+    'aws': <FaAws {...iconProps} />,
+    'mongodb': <SiMongodb {...iconProps} />,
+    'javascript': <SiJavascript {...iconProps} />,
+    'angular': <FaAngular {...iconProps} />,
+    'nestjs': <SiNestjs {...iconProps} />,
+    'nest.js': <SiNestjs {...iconProps} />,
+    'postgresql': <SiPostgresql {...iconProps} />,
+    'ci/cd': <LiaInfinitySolid {...iconProps} />,
+    'microservices': <LiaCubesSolid {...iconProps} />,
+    'next.js': <SiNextdotjs {...iconProps} />,
+    'typescript': <SiTypescript {...iconProps} />,
+    'css': <SiCss3 {...iconProps} />,
+    'php': <FaPhp {...iconProps} />,
+    'laravel': <FaLaravel {...iconProps} />,
+    'mysql': <SiMysql {...iconProps} />,
+    'redis': <SiRedis {...iconProps} />,
+    'gitlab ci/cd': <FaGitlab {...iconProps} />,
+    'kubernetes': <SiKubernetes {...iconProps} />,
+    'graphql': <SiGraphql {...iconProps} />,
+    'jest': <SiJest {...iconProps} />,
+    'mocha': <SiMocha {...iconProps} />,
+    'cypress': <SiCypress {...iconProps} />,
+    'jasmine': <SiJasmine {...iconProps} />,
+    'scrum': <DiScrum {...iconProps} />,
+    'html5': <SiHtml5 {...iconProps} />,
+    'rx.js': <SiReactivex {...iconProps} />,
+    'knockout.js': <GiKnockout {...iconProps} />,
+    'backbone': <SiBackbonedotjs {...iconProps} />,
+    'jenkins ci/cd': <FaJenkins {...iconProps} />,
+    'python': <FaPython {...iconProps} />,
+    'openai apis': <SiOpenai {...iconProps} />,
+    'llm integration': <GiArtificialIntelligence {...iconProps} />,
+    'prompt engineering': <BsLightningChargeFill {...iconProps} />,
+    'event-driven': <BsLightningChargeFill {...iconProps} />,
+    'restful apis': <LiaCubesSolid {...iconProps} />,
+    'agile': <DiScrum {...iconProps} />,
+    'tdd/bdd': <SiJest {...iconProps} />,
+  };
+
+  return iconMap[lowerName] || null;
 };
 const RuslanPortfolio = () => {
   const { info } = useContext(PortfolioContext);
@@ -115,6 +127,9 @@ const RuslanPortfolio = () => {
           <a href="#home" className="base-link font-medium">Home</a>
           <a href="#projects" className="base-link font-medium">Projects</a>
           <a href="#skills" className="base-link font-medium">Skills</a>
+          <a href="#certificates" className="base-link font-medium">Certificates</a>
+          <a href="#events" className="base-link font-medium">Events</a>
+          <a href="#ai-experience" className="base-link font-medium">AI</a>
           <a href="#contact" className="base-link font-medium">Contact</a>
           <a href="/cv" className="base-link font-medium">View CV</a>
           <button
@@ -417,15 +432,18 @@ const RuslanPortfolio = () => {
             </div>
           </div>
         </section>
-        {/*Skills Section*/}
-        <section id="skills" className="mb-10 py-8 flex flex-row flex-wrap">
-          <h2 className="text-3xl font-semibold mb-10">Technical skills</h2>
-          <div className='flex flex-row my-5'>
-            <div className="columns-3 gap-3">
-              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
-                <h3 className="font-bold text-1xl mb-5 px-3 ">Front-end</h3>
-                <div className="flex flex-wrap gap-3 mb-4">
-                  {['Next.js', 'React', 'Typescript', 'CSS', 'Angular', 'HTML5'].map((tech) => (
+        {/*Skills Section - Grouped by Proficiency Level*/}
+        <section id="skills" className="mb-20 py-8">
+          <h2 className="text-3xl font-semibold mb-10">Technical Skills</h2>
+
+          {/* Expert Level */}
+          <div className="mb-12">
+            <h3 className="text-2xl font-semibold mb-6 text-blue-600">Expert Level</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">Front-end</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['React', 'Next.js', 'Typescript', 'Angular', 'HTML5', 'CSS'].map((tech) => (
                     <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
                       <TechnologyIcon name={tech} />
                       {tech}
@@ -433,10 +451,11 @@ const RuslanPortfolio = () => {
                   ))}
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
-                <h3 className="font-bold text-1xl mb-5 px-3">Back-end</h3>
-                <div className="flex flex-wrap gap-3 mb-4">
-                  {['Node.js', 'Nest.js', 'PHP', 'Laravel', 'Angular',].map((tech) => (
+
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">Back-end</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Node.js', 'Nest.js', 'Javascript'].map((tech) => (
                     <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
                       <TechnologyIcon name={tech} />
                       {tech}
@@ -444,10 +463,11 @@ const RuslanPortfolio = () => {
                   ))}
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
-                <h3 className="font-bold text-1xl mb-5 px-3">Databases</h3>
-                <div className="flex flex-wrap gap-3 mb-4">
-                  {['PostgreSQL', 'MySQL', 'MongoDB', 'Redis'].map((tech) => (
+
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">Architecture</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Microservices', 'RESTful APIs', 'Event-Driven'].map((tech) => (
                     <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
                       <TechnologyIcon name={tech} />
                       {tech}
@@ -457,35 +477,94 @@ const RuslanPortfolio = () => {
               </div>
             </div>
           </div>
-          <div className='flex flex-row my-5'>
-            <div className="columns-3 gap-3">
-              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
-                  <h3 className="font-bold text-1xl mb-5 px-3">Cloud and DevOps</h3>
-                  <div className="flex flex-wrap gap-3 mb-4">
-                    {['Docker', 'Gitlab CI/CD', 'AWS', 'Kubernetes', 'GraphQL', 'event-driven systems'].map((tech) => (
-                      <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
-                        <TechnologyIcon name={tech} />
-                        {tech}
-                      </div>
-                    ))}
-                  </div>
+
+          {/* Advanced Level */}
+          <div className="mb-12">
+            <h3 className="text-2xl font-semibold mb-6 text-green-600">Advanced</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">Databases</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['PostgreSQL', 'MongoDB', 'MySQL', 'Redis'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
-                  <h3 className="font-bold text-1xl mb-5 px-3">API & Architecture</h3>
-                  <div className="flex flex-wrap gap-3 mb-4">
-                    {['RESTful APIs', 'Microservices'].map((tech) => (
-                      <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
-                        <TechnologyIcon name={tech} />
-                        {tech}
-                      </div>
-                    ))}
-                  </div>
+
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">Cloud & DevOps</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Docker', 'AWS', 'Gitlab CI/CD', 'CI/CD'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300 h-full">
-                <h3 className="font-bold text-1xl mb-5 px-3">Other</h3>
-                <div className="flex flex-wrap gap-3 mb-4">
-                  {['Jest', 'Mocha', 'Cypress', 'Jasmine', 'TDD/BDD', 'Agile', 'Scrum'].map((tech) => (
-                    <div key={tech} className="flex items-center bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">Testing</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Jest', 'Mocha', 'Cypress', 'Jasmine', 'TDD/BDD'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Proficient Level */}
+          <div className="mb-12">
+            <h3 className="text-2xl font-semibold mb-6 text-purple-600">Proficient</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">Languages</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['PHP', 'Laravel', 'Python'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">Cloud & DevOps</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Kubernetes', 'GraphQL'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">AI & ML</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['OpenAI APIs', 'LLM Integration', 'Prompt Engineering'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm">
+                      <TechnologyIcon name={tech} />
+                      {tech}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-5 hover:shadow-xl transition-all duration-300">
+                <h4 className="font-bold text-lg mb-4 text-gray-800">Methodologies</h4>
+                <div className="flex flex-wrap gap-2">
+                  {['Agile', 'Scrum'].map((tech) => (
+                    <div key={tech} className="flex items-center bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm">
                       <TechnologyIcon name={tech} />
                       {tech}
                     </div>
@@ -495,6 +574,152 @@ const RuslanPortfolio = () => {
             </div>
           </div>
         </section>
+
+        {/* Certificates Section */}
+        {info.certificates && info.certificates.length > 0 && (
+          <section id="certificates" className="mb-20 py-8">
+            <h2 className="text-3xl font-semibold mb-10">Certificates</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {info.certificates.map((cert, idx) => (
+                <div key={idx} className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-all duration-300">
+                  <h3 className="font-bold text-xl mb-2 text-blue-600">{cert.name}</h3>
+                  <p className="text-gray-600 mb-2">{cert.issuer}</p>
+                  <p className="text-gray-500 text-sm mb-3">{cert.date}</p>
+                  <a
+                    href={cert.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                  >
+                    <span>View Certificate</span>
+                    <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Events Section */}
+        {info.events && info.events.length > 0 && (
+          <section id="events" className="mb-20 py-8">
+            <h2 className="text-3xl font-semibold mb-10">Events</h2>
+            <div className="space-y-8">
+              {info.events.map((event, idx) => (
+                <div key={idx} className="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-all duration-300">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {event.image && (
+                      <div className="md:w-1/3">
+                        <img
+                          src={event.image}
+                          alt={event.title}
+                          className="w-full h-48 object-cover rounded-lg"
+                        />
+                      </div>
+                    )}
+                    <div className={event.image ? 'md:w-2/3' : 'w-full'}>
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="font-bold text-2xl text-gray-800">{event.title}</h3>
+                        <span className="text-gray-500 text-sm whitespace-nowrap ml-4">{event.date}</span>
+                      </div>
+                      <p className="text-gray-700">{event.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* AI Experience Section */}
+        {info.aiExperience && (info.aiExperience.description || info.aiExperience.currentInvestigation || info.aiExperience.achievements.length > 0 || info.aiExperience.projects?.length > 0) && (
+          <section id="ai-experience" className="mb-20 py-8">
+            <h2 className="text-3xl font-semibold mb-10">AI Experience</h2>
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg shadow-md p-8">
+              {info.aiExperience.description && (
+                <div className="mb-8 pb-6 border-b border-gray-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <GiArtificialIntelligence className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <h3 className="font-bold text-2xl text-blue-600">AI & Machine Learning Overview</h3>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed text-base">{info.aiExperience.description}</p>
+                </div>
+              )}
+
+              {/* AI Projects Section */}
+              {info.aiExperience.projects && info.aiExperience.projects.length > 0 && (
+                <div className="mb-8 pb-6 border-b border-gray-200">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-indigo-100 rounded-lg">
+                      <BsLightningChargeFill className="w-6 h-6 text-indigo-600" />
+                    </div>
+                    <h3 className="font-bold text-2xl text-indigo-600">AI Projects</h3>
+                  </div>
+                  <div className="space-y-6">
+                    {info.aiExperience.projects.map((project, idx) => (
+                      <div key={idx} className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
+                        <h4 className="font-bold text-xl text-gray-800 mb-3">{project.title}</h4>
+                        <p className="text-gray-700 leading-relaxed mb-4">{project.description}</p>
+                        {project.technologies && project.technologies.length > 0 && (
+                          <div>
+                            <span className="font-semibold text-gray-700 text-sm">Technologies: </span>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {project.technologies.map((tech, techIdx) => (
+                                <div key={techIdx} className="flex items-center bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm">
+                                  <TechnologyIcon name={tech} />
+                                  {tech}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {info.aiExperience.currentInvestigation && (
+                <div className="mb-8 pb-6 border-b border-gray-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <BsLightningChargeFill className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <h3 className="font-bold text-2xl text-purple-600">Current AI Investigation</h3>
+                  </div>
+                  <p className="text-gray-700 leading-relaxed text-base">{info.aiExperience.currentInvestigation}</p>
+                </div>
+              )}
+              {info.aiExperience.achievements && info.aiExperience.achievements.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <h3 className="font-bold text-2xl text-green-600">Key AI Achievements & Milestones</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {info.aiExperience.achievements.map((achievement, idx) => (
+                      <div key={idx} className="bg-white p-5 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 flex items-start gap-3">
+                        <svg className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <p className="text-gray-700 text-base leading-relaxed">{achievement}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Contact Section */}
         <section id="contact" className="mb-20 py-8">
           <h2 className="text-3xl font-semibold mb-10">Contact</h2>

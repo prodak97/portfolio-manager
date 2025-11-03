@@ -1,5 +1,6 @@
 import React, { createContext, useState } from 'react';
-import { PortfolioInfo,} from './App';
+import { PortfolioInfo } from './types/portfolio';
+import { loadFromLocalStorage } from './utils/localStorage';
 
 export const defaultInfo: PortfolioInfo = {
   name: 'Jane doe',
@@ -31,6 +32,14 @@ export const defaultInfo: PortfolioInfo = {
     { category: 'Tools', description: 'Development tools and utilities' },
   ],
   additionalDetails: [],
+  certificates: [],
+  events: [],
+  aiExperience: {
+    description: '',
+    currentInvestigation: '',
+    achievements: [],
+    projects: [],
+  },
 };
 
 
@@ -40,7 +49,11 @@ export const PortfolioContext = createContext({
 });
 
 export function PortfolioProvider({ children }: { children: React.ReactNode }) {
-  const [info, setInfo] = useState<PortfolioInfo>(defaultInfo);
+  const [info, setInfo] = useState<PortfolioInfo>(() => {
+    // Load data from localStorage on initial render
+    return loadFromLocalStorage(defaultInfo);
+  });
+
   return (
     <PortfolioContext.Provider value={{ info, setInfo }}>
       {children}

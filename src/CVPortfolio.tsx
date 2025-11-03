@@ -1,18 +1,9 @@
 import { useContext, useState } from 'react';
 import { PortfolioContext } from './PortfolioProvider';
-import { jsPDF } from 'jspdf';
+import { formatDate } from './utils/dateFormatter';
+import { downloadCVAsPDF } from './utils/downloadCV';
+import { Skill } from './types/portfolio';
 import './styles/cv.css';
-
-// Helper to format date as dd/mm/yy
-function formatDate(dateStr?: string) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = String(d.getFullYear()).slice(-2);
-  return `${day}/${month}/${year}`;
-}
 
 export default function CVPortfolio() {
   const { info } = useContext(PortfolioContext);
@@ -22,43 +13,7 @@ export default function CVPortfolio() {
   const downloadCV = async () => {
     setIsDownloading(true);
     try {
-      const cvElement = document.querySelector('.cv-page') as HTMLElement;
-      if (!cvElement) {
-        alert('CV content not found');
-        return;
-      }
-
-      // Hide the navigation footer before capturing
-      const navFooter = document.querySelector('.cv-nav-footer') as HTMLElement;
-      const originalDisplay = navFooter ? navFooter.style.display : '';
-      if (navFooter) navFooter.style.display = 'none';
-
-      // Create PDF
-      const pdf = new jsPDF('p', 'pt', 'a4');
-
-      await new Promise<void>((resolve) => {
-        (pdf as any).html(cvElement, {
-          x: 0,
-          y: 0,
-          html2canvas: {
-            scale: Math.min(2, window.devicePixelRatio || 1.5),
-            useCORS: true,
-            allowTaint: false,
-            backgroundColor: '#ffffff',
-            logging: false,
-            foreignObjectRendering: false,
-            windowWidth: 850,
-            scrollX: 0,
-            scrollY: -window.scrollY,
-          },
-          callback: () => resolve(),
-        });
-      });
-
-      // Restore navigation footer
-      if (navFooter) navFooter.style.display = originalDisplay;
-
-      pdf.save(`${info.name.replace(/\s+/g, '_')}_CV.pdf`);
+      await downloadCVAsPDF(info);
     } catch (e) {
       console.error('PDF generation error', e);
       alert('Failed to generate PDF. Please try using the Print function instead.');
@@ -74,7 +29,7 @@ export default function CVPortfolio() {
     }
     acc[skill.category].push(skill);
     return acc;
-  }, {} as Record<string, typeof info.skills>);
+  }, {} as Record<string, Skill[]>);
 
   return (
     <div className="cv-container">
@@ -251,6 +206,73 @@ export default function CVPortfolio() {
                 </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {/* Certificates */}
+        {info.certificates && info.certificates.length > 0 && (
+          <section className="cv-section">
+            <h2 className="cv-section-title">Certificates</h2>
+            <div className="cv-additional-details">
+              {info.certificates.map((cert, idx) => (
+                <div key={idx} className="cv-additional-item">
+                  <h3 className="cv-additional-title">{cert.name}</h3>
+                  <p className="cv-additional-desc">
+                    {cert.issuer} - {cert.date}
+                  </p>
+                  <a href={cert.url} target="_blank" rel="noopener noreferrer" className="cv-experience-link">
+                    {cert.url}
+                  </a>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Events */}
+        {info.events && info.events.length > 0 && (
+          <section className="cv-section">
+            <h2 className="cv-section-title">Events</h2>
+            {info.events.map((event, idx) => (
+              <div key={idx} className="cv-experience-item">
+                <div className="cv-experience-header">
+                  <h3 className="cv-experience-title">{event.title}</h3>
+                  <span className="cv-experience-date">{event.date}</span>
+                </div>
+                <p className="cv-experience-description">{event.description}</p>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {/* AI Experience */}
+        {info.aiExperience && (info.aiExperience.description || info.aiExperience.currentInvestigation || info.aiExperience.achievements.length > 0) && (
+          <section className="cv-section">
+            <h2 className="cv-section-title">AI Experience</h2>
+            {info.aiExperience.description && (
+              <div className="cv-additional-item">
+                <h3 className="cv-additional-title">Overview</h3>
+                <p className="cv-additional-desc">{info.aiExperience.description}</p>
+              </div>
+            )}
+            {info.aiExperience.currentInvestigation && (
+              <div className="cv-additional-item">
+                <h3 className="cv-additional-title">Current Investigation</h3>
+                <p className="cv-additional-desc">{info.aiExperience.currentInvestigation}</p>
+              </div>
+            )}
+            {info.aiExperience.achievements && info.aiExperience.achievements.length > 0 && (
+              <div className="cv-additional-item">
+                <h3 className="cv-additional-title">Key Achievements</h3>
+                <ul style={{ listStyleType: 'disc', paddingLeft: '20px' }}>
+                  {info.aiExperience.achievements.map((achievement, idx) => (
+                    <li key={idx} className="cv-additional-desc" style={{ marginBottom: '4px' }}>
+                      {achievement}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
         )}
 

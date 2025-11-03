@@ -3,7 +3,10 @@
     "allow": [
       "Bash(git add:*)",
       "mcp__ide__getDiagnostics",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(claude mcp add context7 -- npx -y @upstash/context7-mcp@latest)",
+      "Bash(claude mcp add memory-bank -s user -- npx @movibe/memory-bank-mcp --mode code)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
