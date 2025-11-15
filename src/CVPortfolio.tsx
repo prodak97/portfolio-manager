@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { PortfolioContext } from './PortfolioProvider';
 import { formatDate } from './utils/dateFormatter';
 import { downloadCVAsPDF } from './utils/downloadCV';
@@ -98,19 +98,39 @@ export default function CVPortfolio() {
         )}
 
         {/* Core Competencies */}
-        {info.coreCompetencies && info.coreCompetencies.length > 0 && (
-          <section className="cv-section">
-            <h2 className="cv-section-title">Core Competencies</h2>
-            <div className="cv-competencies-grid">
-              {info.coreCompetencies.map((comp, idx) => (
-                <div key={idx} className="cv-competency-item">
-                  <h3 className="cv-competency-title">{comp.category}</h3>
-                  <p className="cv-competency-desc">{comp.description}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {info.coreCompetencies && info.coreCompetencies.length > 0 && (() => {
+          // Group competencies by category
+          const groupedCompetencies = info.coreCompetencies.reduce((acc, comp) => {
+            if (!acc[comp.category]) {
+              acc[comp.category] = [];
+            }
+            acc[comp.category].push(comp);
+            return acc;
+          }, {} as Record<string, typeof info.coreCompetencies>);
+
+          return (
+            <section className="cv-section">
+              <h2 className="cv-section-title">Core Competencies</h2>
+              <div className="cv-competencies-grid">
+                {Object.entries(groupedCompetencies).map(([category, competencies]) => (
+                  <React.Fragment key={category}>
+                    {competencies.length > 1 && (
+                      <div className="cv-competency-group-header">{category}</div>
+                    )}
+                    {competencies.map((comp, idx) => (
+                      <div key={idx} className="cv-competency-item">
+                        {competencies.length === 1 && (
+                          <h3 className="cv-competency-title">{comp.category}</h3>
+                        )}
+                        <p className="cv-competency-desc">{comp.description}</p>
+                      </div>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* Skills */}
         {info.skills && info.skills.length > 0 && (
@@ -163,12 +183,6 @@ export default function CVPortfolio() {
                   </span>
                 </div>
                 <p className="cv-experience-description">{project.description}</p>
-                {project.technologiesUsed && project.technologiesUsed.length > 0 && (
-                  <div className="cv-technologies">
-                    <span className="cv-tech-label">Technologies:</span>
-                    <span className="cv-tech-list">{project.technologiesUsed.join(', ')}</span>
-                  </div>
-                )}
               </div>
             ))}
           </section>
@@ -189,6 +203,18 @@ export default function CVPortfolio() {
                     {formatDate(edu.startDate)} - {edu.endDate ? formatDate(edu.endDate) : 'Present'}
                   </span>
                 </div>
+                {edu.images && edu.images.length > 0 && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                    {edu.images.map((img, imgIdx) => (
+                      <img
+                        key={imgIdx}
+                        src={img}
+                        alt={`${edu.name} ${imgIdx + 1}`}
+                        style={{ width: '255px', height: '100%', objectFit: 'contain', borderRadius: '4px', border: '1px solid #e5e7eb' }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </section>
@@ -203,6 +229,13 @@ export default function CVPortfolio() {
                 <div key={idx} className="cv-additional-item">
                   <h3 className="cv-additional-title">{detail.category}</h3>
                   <p className="cv-additional-desc">{detail.description}</p>
+                  {detail.image && (
+                    <img
+                      src={detail.image}
+                      alt={detail.category}
+                      style={{ width: '75%', maxWidth: '400px', height: '100%', marginTop: '8px', borderRadius: '4px', border: '1px solid #e5e7eb' }}
+                    />
+                  )}
                 </div>
               ))}
             </div>
@@ -223,6 +256,18 @@ export default function CVPortfolio() {
                   <a href={cert.url} target="_blank" rel="noopener noreferrer" className="cv-experience-link">
                     {cert.url}
                   </a>
+                  {cert.images && cert.images.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: cert.images.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px', marginTop: '12px' }}>
+                      {cert.images.map((img, imgIdx) => (
+                        <img
+                          key={imgIdx}
+                          src={img}
+                          alt={`${cert.name} ${imgIdx + 1}`}
+                          style={{ width: '300px', height: '400px', objectFit: 'fill', borderRadius: '4px', border: '1px solid #e5e7eb' }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
